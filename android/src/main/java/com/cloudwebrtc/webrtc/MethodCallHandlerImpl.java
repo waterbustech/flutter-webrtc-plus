@@ -89,10 +89,6 @@ import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.view.TextureRegistry;
 import io.flutter.view.TextureRegistry.SurfaceTextureEntry;
 
-import org.webrtc.voiceengine.WebRtcAudioManager;
-import org.webrtc.voiceengine.WebRtcAudioUtils;
-import org.webrtc.voiceengine.WebRtcAudioEffects;
-
 public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
   static public final String TAG = "FlutterWebRTCPlugin";
 
@@ -183,12 +179,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       }
     }
 
-    Boolean isDeviceSupportHWAec = WebRtcAudioEffects.canUseAcousticEchoCanceler();
-    Boolean isDeviceSupportHWNs = WebRtcAudioEffects.canUseNoiseSuppressor();
-
     JavaAudioDeviceModule.Builder audioDeviceModuleBuilder = JavaAudioDeviceModule.builder(context)
-            .setUseHardwareAcousticEchoCanceler(isDeviceSupportHWAec)
-            .setUseHardwareNoiseSuppressor(isDeviceSupportHWNs)
+            .setUseHardwareAcousticEchoCanceler(true)
+            .setUseHardwareNoiseSuppressor(true)
             .setSamplesReadyCallback(getUserMediaImpl.inputSamplesInterceptor);
 
     if (audioAttributes != null) {
@@ -196,21 +189,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     }
 
     audioDeviceModule = audioDeviceModuleBuilder.createAudioDeviceModule();
-
-    if (!isDeviceSupportHWAec) {
-      WebRtcAudioUtils.setWebRtcBasedAcousticEchoCanceler(true);
-    }
-
-    if (!isDeviceSupportHWNs) {
-      // Use software AEC
-      WebRtcAudioUtils.setWebRtcBasedNoiseSuppressor(true);
-    }
-
-    // Enable OpenSL ES
-    WebRtcAudioManager.setBlacklistDeviceForOpenSLESUsage(false);
-
-    // Use software AGC
-    WebRtcAudioUtils.setWebRtcBasedAutomaticGainControl(true);
 
     getUserMediaImpl.audioDeviceModule = (JavaAudioDeviceModule) audioDeviceModule;
 
@@ -1269,7 +1247,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     conf.suspendBelowMinBitrate = true;
     conf.enableCpuOveruseDetection = true;
     conf.audioJitterBufferMaxPackets = 3;
-    conf.combinedAudioVideoBwe = true;
 
     PeerConnectionObserver observer = new PeerConnectionObserver(conf, this, messenger, peerConnectionId);
     PeerConnection peerConnection
