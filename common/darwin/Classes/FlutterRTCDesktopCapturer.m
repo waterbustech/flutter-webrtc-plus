@@ -48,22 +48,22 @@ NSArray<RTCDesktopSource*>* _captureSources;
     [screenCapturer stopCaptureWithCompletionHandler:handler];
   };
 
-  if (useBroadcastExtension) {
-    NSString* extension =
-        [[[NSBundle mainBundle] infoDictionary] valueForKey:kRTCScreenSharingExtension];
+  // if (useBroadcastExtension) {
+  //   NSString* extension =
+  //       [[[NSBundle mainBundle] infoDictionary] valueForKey:kRTCScreenSharingExtension];
 
-    RPSystemBroadcastPickerView* picker = [[RPSystemBroadcastPickerView alloc] init];
-    picker.showsMicrophoneButton = false;
-    if (extension) {
-      picker.preferredExtension = extension;
-    } else {
-      NSLog(@"Not able to find the %@ key", kRTCScreenSharingExtension);
-    }
-    SEL selector = NSSelectorFromString(@"buttonPressed:");
-    if ([picker respondsToSelector:selector]) {
-      [picker performSelector:selector withObject:nil];
-    }
-  }
+  //   RPSystemBroadcastPickerView* picker = [[RPSystemBroadcastPickerView alloc] init];
+  //   picker.showsMicrophoneButton = false;
+  //   if (extension) {
+  //     picker.preferredExtension = extension;
+  //   } else {
+  //     NSLog(@"Not able to find the %@ key", kRTCScreenSharingExtension);
+  //   }
+  //   SEL selector = NSSelectorFromString(@"buttonPressed:");
+  //   if ([picker respondsToSelector:selector]) {
+  //     [picker performSelector:selector withObject:nil];
+  //   }
+  // }
 #endif
 
 #if TARGET_OS_OSX
