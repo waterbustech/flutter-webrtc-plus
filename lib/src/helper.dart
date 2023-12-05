@@ -158,6 +158,16 @@ class Helper {
           AppleNativeAudioManagement.getAppleAudioConfigurationForMode(mode,
               preferSpeakerOutput: preferSpeakerOutput));
 
+
+  // Virtual Background & Blur using Google Mediapipe with GPU tasks, Waterbus
+  static Future<bool> isGpuSupported() async {
+    if (!WebRTC.platformIsAndroid) return false;
+
+    final bool? isSupported = await WebRTC.invokeMethod("isGpuSupported");
+
+    return isSupported ?? false;
+  }
+
   // Enable Virtual Background with the provided background image and threshold confidence level.
   // The backgroundImage is expected to be in Uint8List format representing the image bytes.
   // The thresholdConfidence is an optional parameter with a default value of 0.7, which represents
@@ -173,6 +183,11 @@ class Helper {
       "imageBytes": backgroundImage,
       "confidence": thresholdConfidence,
     });
+  }
+
+  static Future<void> enableGaussianBlur() async {
+    if (!WebRTC.platformIsAndroid) return;
+    await WebRTC.invokeMethod("enableGaussianBlur");
   }
 
   // Disable Virtual Background feature.

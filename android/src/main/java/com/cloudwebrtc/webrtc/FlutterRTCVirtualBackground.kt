@@ -38,6 +38,7 @@ import java.util.concurrent.Executors
 import kotlin.math.max
 
 class FlutterRTCVirtualBackground {
+    var isGpuSupported = false
     private val tag: String = "[FlutterRTC-VirtualBackground]"
     private val frameSizeProcessing = 480
     private var videoSource: VideoSource? = null
@@ -58,10 +59,13 @@ class FlutterRTCVirtualBackground {
         val useGpuTask = TfLiteGpu.isGpuDelegateAvailable(context)
 
         val interpreterTask = useGpuTask.continueWith { useGpuTask ->
-            TfLite.initialize(context,
-                TfLiteInitializationOptions.builder()
-                    .setEnableGpuDelegateSupport(useGpuTask.result)
-                    .build())
+            if (useGpuTask.result) {
+                isGpuSupported = true
+                TfLite.initialize(context,
+                    TfLiteInitializationOptions.builder()
+                        .setEnableGpuDelegateSupport(useGpuTask.result)
+                        .build())
+            }
         }
 
         this.videoSource = videoSource

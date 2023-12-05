@@ -125,6 +125,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     this.messenger = messenger;
   }
 
+  static public void setSupportGpu(Boolean newValue) {
+    supportGpu = newValue;
+  }
   static private void resultError(String method, String error, Result result) {
     String errorMsg = method + "(): " + error;
     result.error(method, errorMsg, null);
@@ -302,6 +305,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         Map<String, Object> constraints = call.argument("constraints");
         ConstraintsMap constraintsMap = new ConstraintsMap(constraints);
         getUserMedia(constraintsMap, result);
+        break;
+      }
+      case "isGpuSupported": {
+        result.success(flutterRTCVirtualBackground.isGpuSupported());
         break;
       }
       case "enableVirtualBackground":{
