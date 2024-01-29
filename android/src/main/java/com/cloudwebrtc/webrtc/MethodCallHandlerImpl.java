@@ -107,7 +107,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
    */
   private GetUserMediaImpl getUserMediaImpl;
 
-  private FlutterRTCVirtualBackground flutterRTCVirtualBackground;
+  private FlutterRTCVideoPipe videoPipe;
 
   private AudioDeviceModule audioDeviceModule;
 
@@ -161,8 +161,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
                     .setFieldTrials("WebRTC-Fec-03-Advertised/Enabled/") // Enable FEC
                     .createInitializationOptions());
 
-    flutterRTCVirtualBackground = new FlutterRTCVirtualBackground();
-    getUserMediaImpl = new GetUserMediaImpl(this, context, flutterRTCVirtualBackground);
+    videoPipe = new FlutterRTCVideoPipe();
+    getUserMediaImpl = new GetUserMediaImpl(this, context, videoPipe);
     frameCryptor = new FlutterRTCFrameCryptor(this);
 
     AudioAttributes audioAttributes = null;
@@ -308,7 +308,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         break;
       }
       case "isGpuSupported": {
-        result.success(flutterRTCVirtualBackground.isGpuSupported());
+        result.success(videoPipe.isGpuSupported());
         break;
       }
       case "enableVirtualBackground":{
@@ -318,12 +318,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         if (image != null) {
           bgImage =  BitmapFactory.decodeByteArray(image, 0, image.length);
         }
-        flutterRTCVirtualBackground.configurationVirtualBackground(bgImage, confidence);
+        videoPipe.configurationVirtualBackground(bgImage, confidence);
         result.success(true);
         break;
       }
       case "disableVirtualBackground": {
-        flutterRTCVirtualBackground.setBackgroundIsNull();
+        videoPipe.resetBackground();
         result.success(true);
         break;
       }
