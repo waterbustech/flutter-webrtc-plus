@@ -125,9 +125,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     this.messenger = messenger;
   }
 
-  static public void setSupportGpu(Boolean newValue) {
-    supportGpu = newValue;
-  }
   static private void resultError(String method, String error, Result result) {
     String errorMsg = method + "(): " + error;
     result.error(method, errorMsg, null);

@@ -158,7 +158,6 @@ class Helper {
           AppleNativeAudioManagement.getAppleAudioConfigurationForMode(mode,
               preferSpeakerOutput: preferSpeakerOutput));
 
-
   // Virtual Background & Blur using Google Mediapipe with GPU tasks, Waterbus
   static Future<bool> isGpuSupported() async {
     if (!WebRTC.platformIsAndroid) return false;
