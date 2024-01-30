@@ -135,7 +135,11 @@ class FlutterRTCVideoPipe {
     }
 
     fun setBeautyFilter(filter: BeautyFilter) {
-        beautyFilter = filter
+        beautyFilter = if (filter == BeautyFilter()) {
+            null
+        } else {
+            filter
+        }
     }
 
     private fun processFrame(context: Context) {
