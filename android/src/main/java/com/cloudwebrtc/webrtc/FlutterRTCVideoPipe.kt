@@ -137,7 +137,7 @@ class FlutterRTCVideoPipe {
     private fun processFrame(context: Context) {
         val eglBase = EglBase.create()
         textureHelper = SurfaceTextureHelper.create("SurfaceTextureThread", eglBase.eglBaseContext)
-        videoSource!!.setVideoProcessor(object : VideoProcessor {
+        videoSource?.setVideoProcessor(object : VideoProcessor {
             override fun onCapturerStarted(success: Boolean) {
                 // Handle video capture start event
             }
@@ -181,7 +181,7 @@ class FlutterRTCVideoPipe {
                             }
                         }
                     } else {
-                        sink!!.onFrame(frame)
+                        sink?.onFrame(frame)
                     }
                 }
             }
@@ -272,42 +272,40 @@ class FlutterRTCVideoPipe {
     private fun emitBitmapOnFrame(outputBitmap: Bitmap, cacheFrame: CacheFrame) {
         // Create a new VideoFrame from the processed bitmap
         val yuvConverter = YuvConverter()
-        if (textureHelper != null && textureHelper!!.handler != null) {
-            textureHelper!!.handler.post {
-                val textures = IntArray(1)
-                GLES20.glGenTextures(1, textures, 0)
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
-                GLES20.glTexParameteri(
-                    GLES20.GL_TEXTURE_2D,
-                    GLES20.GL_TEXTURE_MIN_FILTER,
-                    GLES20.GL_NEAREST
-                )
-                GLES20.glTexParameteri(
-                    GLES20.GL_TEXTURE_2D,
-                    GLES20.GL_TEXTURE_MAG_FILTER,
-                    GLES20.GL_NEAREST
-                )
-                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
-                val buffer = TextureBufferImpl(
-                    outputBitmap.width,
-                    outputBitmap.height,
-                    VideoFrame.TextureBuffer.Type.RGB,
-                    textures[0],
-                    Matrix(),
-                    textureHelper!!.handler,
-                    yuvConverter,
-                    null
-                )
-                val i420Buf = yuvConverter.convert(buffer)
-                if (i420Buf != null) {
-                    // Create the output VideoFrame and send it to the sink
-                    val outputVideoFrame =
-                        VideoFrame(i420Buf, cacheFrame.originalFrame.rotation, cacheFrame.originalFrame.timestampNs)
-                    sink?.onFrame(outputVideoFrame)
-                } else {
-                    // If the conversion fails, send the original frame to the sink
-                    sink?.onFrame(cacheFrame.originalFrame)
-                }
+        textureHelper?.handler?.post {
+            val textures = IntArray(1)
+            GLES20.glGenTextures(1, textures, 0)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
+            GLES20.glTexParameteri(
+                GLES20.GL_TEXTURE_2D,
+                GLES20.GL_TEXTURE_MIN_FILTER,
+                GLES20.GL_NEAREST
+            )
+            GLES20.glTexParameteri(
+                GLES20.GL_TEXTURE_2D,
+                GLES20.GL_TEXTURE_MAG_FILTER,
+                GLES20.GL_NEAREST
+            )
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
+            val buffer = TextureBufferImpl(
+                outputBitmap.width,
+                outputBitmap.height,
+                VideoFrame.TextureBuffer.Type.RGB,
+                textures[0],
+                Matrix(),
+                textureHelper!!.handler,
+                yuvConverter,
+                null
+            )
+            val i420Buf = yuvConverter.convert(buffer)
+            if (i420Buf != null) {
+                // Create the output VideoFrame and send it to the sink
+                val outputVideoFrame =
+                    VideoFrame(i420Buf, cacheFrame.originalFrame.rotation, cacheFrame.originalFrame.timestampNs)
+                sink?.onFrame(outputVideoFrame)
+            } else {
+                // If the conversion fails, send the original frame to the sink
+                sink?.onFrame(cacheFrame.originalFrame)
             }
         }
     }

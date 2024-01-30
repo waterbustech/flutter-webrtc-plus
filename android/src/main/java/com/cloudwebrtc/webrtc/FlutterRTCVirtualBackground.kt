@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper
 import java.nio.ByteBuffer
@@ -12,8 +13,7 @@ import java.nio.FloatBuffer
 import kotlin.math.max
 
 class FlutterRTCVirtualBackground {
-    var isGpuSupported = false
-    private val tag: String = "[FlutterRTC-VirtualBackground]"
+    private val tag: String = "[FlutterRTC-Background]"
     private val frameSizeProcessing = 480
     private var expectConfidence = 0.7
     private var imageSegmentationHelper: ImageSegmenterHelper? = null
@@ -210,6 +210,8 @@ class FlutterRTCVirtualBackground {
 
         // Draw the segmentedBitmap on the canvas with the same transformations
         canvas.drawBitmap(segmentedBitmap, matrix, null)
+
+        Log.d(tag, "Drawed the segment on of the background")
 
         return outputBitmap
     }
