@@ -17,3 +17,4 @@ export 'src/native/utils.dart' if (dart.library.html) 'src/web/utils.dart';
 export 'src/native/adapter_type.dart';
 export 'src/native/android/audio_configuration.dart';
 export 'src/native/ios/audio_configuration.dart';
+export 'src/models/beauty_filter.dart';

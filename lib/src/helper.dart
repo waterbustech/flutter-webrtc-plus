@@ -196,4 +196,10 @@ class Helper {
 
     await WebRTC.invokeMethod("disableVirtualBackground");
   }
+
+  static Future<void> applyFilter(BeautyFilter filter) async {
+    if (!WebRTC.platformIsAndroid) return;
+
+    await WebRTC.invokeMethod("applyFilter", filter.toMap());
+  }
 }

@@ -23,6 +23,7 @@ import androidx.annotation.RequiresApi;
 import com.cloudwebrtc.webrtc.audio.AudioDeviceKind;
 import com.cloudwebrtc.webrtc.audio.AudioSwitchManager;
 import com.cloudwebrtc.webrtc.audio.AudioUtils;
+import com.cloudwebrtc.webrtc.models.BeautyFilter;
 import com.cloudwebrtc.webrtc.record.AudioChannel;
 import com.cloudwebrtc.webrtc.record.FrameCapturer;
 import com.cloudwebrtc.webrtc.utils.AnyThreadResult;
@@ -316,6 +317,18 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
           bgImage =  BitmapFactory.decodeByteArray(image, 0, image.length);
         }
         videoPipe.configurationVirtualBackground(bgImage, confidence);
+        result.success(true);
+        break;
+      }
+      case "applyFilter":{
+        double contrast = call.argument("contrast");
+        double brightness = call.argument("brightness");
+        double saturation = call.argument("saturation");
+        double blurRadius = call.argument("blurRadius");
+        double noiseReduction = call.argument("noiseReduction");
+
+        BeautyFilter beautyFilter = new BeautyFilter(contrast, brightness, saturation, blurRadius, noiseReduction);
+        videoPipe.setBeautyFilter(beautyFilter);
         result.success(true);
         break;
       }

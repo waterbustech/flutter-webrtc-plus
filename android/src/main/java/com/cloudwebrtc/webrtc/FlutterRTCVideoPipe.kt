@@ -134,6 +134,10 @@ class FlutterRTCVideoPipe {
         expectConfidence = confidence
     }
 
+    fun setBeautyFilter(filter: BeautyFilter) {
+        beautyFilter = filter
+    }
+
     private fun processFrame(context: Context) {
         val eglBase = EglBase.create()
         textureHelper = SurfaceTextureHelper.create("SurfaceTextureThread", eglBase.eglBaseContext)
