@@ -5,6 +5,8 @@ import static com.cloudwebrtc.webrtc.utils.MediaConstraintsUtils.parseMediaConst
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -21,6 +23,7 @@ import androidx.annotation.RequiresApi;
 import com.cloudwebrtc.webrtc.audio.AudioDeviceKind;
 import com.cloudwebrtc.webrtc.audio.AudioSwitchManager;
 import com.cloudwebrtc.webrtc.audio.AudioUtils;
+import com.cloudwebrtc.webrtc.models.StyleEffect;
 import com.cloudwebrtc.webrtc.record.AudioChannel;
 import com.cloudwebrtc.webrtc.record.FrameCapturer;
 import com.cloudwebrtc.webrtc.utils.AnyThreadResult;
@@ -35,8 +38,6 @@ import com.twilio.audioswitch.AudioDevice;
 
 import org.webrtc.AudioTrack;
 import org.webrtc.CryptoOptions;
-import org.webrtc.DefaultVideoEncoderFactory;
-import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DtmfSender;
 import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
@@ -107,6 +108,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
    */
   private GetUserMediaImpl getUserMediaImpl;
 
+  private FlutterRTCVideoPipe videoPipe;
+
   private AudioDeviceModule audioDeviceModule;
 
   private FlutterRTCFrameCryptor frameCryptor;
@@ -156,7 +159,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
                     .setFieldTrials("WebRTC-Fec-03-Advertised/Enabled/") // Enable FEC
                     .createInitializationOptions());
 
-    getUserMediaImpl = new GetUserMediaImpl(this, context);
+    videoPipe = new FlutterRTCVideoPipe();
+    getUserMediaImpl = new GetUserMediaImpl(this, context, videoPipe);
     frameCryptor = new FlutterRTCFrameCryptor(this);
 
     AudioAttributes audioAttributes = null;
@@ -221,7 +225,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
 
   @Override
   public void onMethodCall(MethodCall call, @NonNull Result notSafeResult) {
-
     final AnyThreadResult result = new AnyThreadResult(notSafeResult);
     switch (call.method) {
       case "initialize": {
@@ -299,6 +302,31 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         Map<String, Object> constraints = call.argument("constraints");
         ConstraintsMap constraintsMap = new ConstraintsMap(constraints);
         getUserMedia(constraintsMap, result);
+        break;
+      }
+      case "isGpuSupported": {
+        result.success(videoPipe.isGpuSupported());
+        break;
+      }
+      case "enableVirtualBackground":{
+        byte[] image = call.argument("imageBytes");
+        double confidence = call.argument("confidence");
+        Bitmap bgImage = null;
+        if (image != null) {
+          bgImage =  BitmapFactory.decodeByteArray(image, 0, image.length);
+        }
+        videoPipe.configurationVirtualBackground(bgImage, confidence);
+        result.success(true);
+        break;
+      }
+      case "applyFilter":{
+        videoPipe.setBeautyFilter(StyleEffect.CLASSIC);
+        result.success(true);
+        break;
+      }
+      case "disableVirtualBackground": {
+        videoPipe.resetBackground();
+        result.success(true);
         break;
       }
       case "createLocalMediaStream":

@@ -111,6 +111,7 @@ class GetUserMediaImpl {
     JavaAudioDeviceModule audioDeviceModule;
     private final SparseArray<MediaRecorderImpl> mediaRecorders = new SparseArray<>();
     private AudioDeviceInfo preferredInput = null;
+    private FlutterRTCVideoPipe videoPipe = null;
     private boolean isTorchOn;
 
     public void screenRequestPermissions(ResultReceiver resultReceiver) {
@@ -207,9 +208,10 @@ class GetUserMediaImpl {
         }
     }
 
-    GetUserMediaImpl(StateProvider stateProvider, Context applicationContext) {
+    GetUserMediaImpl(StateProvider stateProvider, Context applicationContext, FlutterRTCVideoPipe videoPipe) {
         this.stateProvider = stateProvider;
         this.applicationContext = applicationContext;
+        this.videoPipe = videoPipe;
     }
 
     static private void resultError(String method, String error, Result result) {
@@ -733,6 +735,10 @@ class GetUserMediaImpl {
 
         PeerConnectionFactory pcFactory = stateProvider.getPeerConnectionFactory();
         VideoSource videoSource = pcFactory.createVideoSource(false);
+
+        // Initial RTCVirtualBackground
+        videoPipe.initialize(applicationContext, videoSource);
+
         String threadName = Thread.currentThread().getName() + "_texture_camera_thread";
         SurfaceTextureHelper surfaceTextureHelper =
                 SurfaceTextureHelper.create(threadName, EglUtils.getRootEglBaseContext());
@@ -798,6 +804,9 @@ class GetUserMediaImpl {
 
     void removeVideoCapturerSync(String id) {
         synchronized (mVideoCapturers) {
+            // Dispose Virtual Background
+            videoPipe.dispose();
+
             VideoCapturerInfo info = mVideoCapturers.get(id);
             if (info != null) {
                 try {
