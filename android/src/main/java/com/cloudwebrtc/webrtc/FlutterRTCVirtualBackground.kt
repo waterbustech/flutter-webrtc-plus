@@ -4,36 +4,18 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
-import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
-import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper
+import android.graphics.Paint
+import android.graphics.Rect
+import org.opencv.android.Utils
+import org.opencv.core.CvType
+import org.opencv.core.Mat
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
-import kotlin.math.max
 
 class FlutterRTCVirtualBackground {
     private val tag: String = "[FlutterRTC-Background]"
-    private val frameSizeProcessing = 480
-    private var expectConfidence = 0.7
-    private var imageSegmentationHelper: ImageSegmenterHelper? = null
-
-    /**
-     * Process the segmentation of the input bitmap using the AI segmenter.
-     * The resulting segmented bitmap is then combined with the provided background bitmap,
-     * and the final output frame is sent to the video sink.
-     *
-     * @param bitmap The input bitmap to be segmented.
-     * @param original The original video frame for metadata reference (rotation, timestamp, etc.).
-     * @param sink The VideoSink to receive the processed video frame.
-     */
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun processSegmentation(bitmap: Bitmap, frameTime: Long) {
-        val resizeBitmap = resizeBitmapKeepAspectRatio(bitmap, frameSizeProcessing)
-
-        imageSegmentationHelper?.segmentLiveStreamFrame(resizeBitmap, frameTime)
-    }
-
     /**
      * Resize the given bitmap while maintaining its original aspect ratio.
      *
@@ -41,7 +23,7 @@ class FlutterRTCVirtualBackground {
      * @param maxSize The maximum size (width or height) of the resized bitmap.
      * @return The resized bitmap while keeping its original aspect ratio.
      */
-    private fun resizeBitmapKeepAspectRatio(bitmap: Bitmap, maxSize: Int): Bitmap {
+    fun resizeBitmapKeepAspectRatio(bitmap: Bitmap, maxSize: Int): Bitmap {
         val originalWidth = bitmap.width
         val originalHeight = bitmap.height
 
@@ -88,8 +70,6 @@ class FlutterRTCVirtualBackground {
      * @param maskWidth The width of the mask.
      * @param maskHeight The height of the mask.
      * @param originalBitmap The original input bitmap used for color extraction.
-     * @param scaledWidth The width of the scaled bitmap.
-     * @param scaledHeight The height of the scaled bitmap.
      * @return An array of colors representing the segmented regions.
      */
     fun maskColorsFromByteBuffer(
@@ -97,60 +77,32 @@ class FlutterRTCVirtualBackground {
         maskWidth: Int,
         maskHeight: Int,
         originalBitmap: Bitmap,
-        scaledWidth: Int,
-        scaledHeight: Int
+        expectConfidence: Double
     ): IntArray {
-        val colors = IntArray(scaledWidth * scaledHeight)
-        var count = 0
-        val scaleX = scaledWidth.toFloat() / maskWidth
-        val scaleY = scaledHeight.toFloat() / maskHeight
-        for (y in 0 until scaledHeight) {
-            for (x in 0 until scaledWidth) {
-                val maskX: Int = (x / scaleX).toInt()
-                val maskY: Int = (y / scaleY).toInt()
-                if (maskX in 0 until maskWidth && maskY >= 0 && maskY < maskHeight) {
-                    val position = (maskY * maskWidth + maskX) * 4
-                    mask.position(position)
+        val colors = IntArray(maskWidth * maskHeight)
+        val scaleX = originalBitmap.width.toFloat() / maskWidth
+        val scaleY = originalBitmap.height.toFloat() / maskHeight
 
-                    // Get the confidence of the (x,y) pixel in the mask being in the foreground.
-                    val foregroundConfidence = mask.float
-                    val pixelColor = originalBitmap.getPixel(x, y)
+        for (i in 0 until maskWidth * maskHeight) {
+            val humanLikelihood = 1 - mask.float
 
-                    // Extract the color channels from the original pixel
-                    val alpha = Color.alpha(pixelColor)
-                    val red = Color.red(pixelColor)
-                    val green = Color.green(pixelColor)
-                    val blue = Color.blue(pixelColor)
+            if (humanLikelihood >= expectConfidence) {
+                val x = (i % maskWidth * scaleX).toInt()
+                val y = (i / maskWidth * scaleY).toInt()
+                val originalPixel = originalBitmap.getPixel(x, y)
 
-                    // Calculate the new alpha and color for the foreground and background
-                    var newAlpha: Int
-                    var newRed: Int
-                    var newGreen: Int
-                    var newBlue: Int
-                    if (foregroundConfidence >= expectConfidence) {
-                        // Foreground uses color from the original bitmap
-                        newAlpha = alpha
-                        newRed = red
-                        newGreen = green
-                        newBlue = blue
-                    } else {
-                        // Background is black with alpha 0
-                        newAlpha = 0
-                        newRed = 0
-                        newGreen = 0
-                        newBlue = 0
-                    }
-
-                    // Create a new color with the adjusted alpha and RGB channels
-                    val newColor = Color.argb(newAlpha, newRed, newGreen, newBlue)
-                    colors[count] = newColor
-                } else {
-                    // Pixels outside the original mask size are considered background (black with alpha 0)
-                    colors[count] = Color.argb(0, 0, 0, 0)
-                }
-                count++
+                colors[i] = Color.argb(
+                    Color.alpha(originalPixel),
+                    Color.red(originalPixel),
+                    Color.green(originalPixel),
+                    Color.blue(originalPixel)
+                )
+            } else {
+                // Pixel is likely to be background, make it transparent
+                colors[i] =  Color.argb(0, 0, 0, 0)
             }
         }
+
         return colors
     }
 
@@ -167,54 +119,103 @@ class FlutterRTCVirtualBackground {
     fun drawSegmentedBackground(
         segmentedBitmap: Bitmap?,
         backgroundBitmap: Bitmap?,
-        rotationAngle: Int
+        rotationAngle: Int?
     ): Bitmap? {
         if (segmentedBitmap == null || backgroundBitmap == null) {
-            // Handle invalid bitmaps
             return null
         }
 
-        // Create a new bitmap with dimensions matching the segmentedBitmap
+        val isHorizontalFrame = rotationAngle == 0 || rotationAngle == 180
+
         val outputBitmap = Bitmap.createBitmap(
             segmentedBitmap.width,
             segmentedBitmap.height,
             Bitmap.Config.ARGB_8888
         )
+
         val canvas = Canvas(outputBitmap)
 
-        // Create a matrix to apply transformations to the background and segmentedBitmap
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
         val matrix = Matrix()
+        matrix.postRotate((rotationAngle?.toFloat() ?: 0f) - 180)
 
-        // Calculate the scale factor for the backgroundBitmap to be larger or equal to the segmentedBitmap
-        val scaleX = segmentedBitmap.width.toFloat() / backgroundBitmap.width
-        val scaleY = segmentedBitmap.height.toFloat() / backgroundBitmap.height
-        val scale = max(scaleX, scaleY)
+        if (isHorizontalFrame) {
+            val scaleFitContain = Math.min(
+                segmentedBitmap.width.toFloat() / backgroundBitmap.width,
+                segmentedBitmap.height.toFloat() / backgroundBitmap.height
+            )
 
-        // Calculate the new dimensions of the backgroundBitmap after scaling
-        val newBackgroundWidth = (backgroundBitmap.width * scale).toInt()
-        val newBackgroundHeight = (backgroundBitmap.height * scale).toInt()
+            val scaledWidthFitContain = (backgroundBitmap.width * scaleFitContain).toInt()
+            val scaledHeightFitContain = (backgroundBitmap.height * scaleFitContain).toInt()
 
-        // Calculate the offset to center the backgroundBitmap in the outputBitmap
-        val offsetX = (segmentedBitmap.width - newBackgroundWidth) / 2
-        val offsetY = (segmentedBitmap.height - newBackgroundHeight) / 2
+            val rotatedBackgroundBitmap = Bitmap.createBitmap(
+                backgroundBitmap,
+                0,
+                0,
+                backgroundBitmap.width,
+                backgroundBitmap.height,
+                matrix,
+                true
+            )
 
-        // Apply scale and translate to center the backgroundBitmap and segmentedBitmap
-        matrix.postScale(scale, scale)
-        matrix.postTranslate(offsetX.toFloat(), offsetY.toFloat())
+            val backgroundRect = Rect(
+                (segmentedBitmap.width - scaledWidthFitContain) / 2,
+                (segmentedBitmap.height - scaledHeightFitContain) / 2,
+                (segmentedBitmap.width + scaledWidthFitContain) / 2,
+                (segmentedBitmap.height + scaledHeightFitContain) / 2
+            )
 
-        // Rotate the backgroundBitmap and segmentedBitmap by the specified angle around the center of the image
-        matrix.postRotate(rotationAngle.toFloat(), segmentedBitmap.width / 2f, segmentedBitmap.height / 2f)
+            canvas.drawBitmap(
+                rotatedBackgroundBitmap,
+                null,
+                backgroundRect,
+                paint
+            )
+        } else {
+            val newBackgroundWidth = Math.min(segmentedBitmap.width.toFloat(), segmentedBitmap.height.toFloat()).toInt()
+            val scaleFactor = (newBackgroundWidth.toFloat() / backgroundBitmap.width.toFloat())
+            val newBackgroundHeight = (backgroundBitmap.height * scaleFactor).toInt()
 
-        // Draw the backgroundBitmap on the canvas with the specified transformations
-        canvas.drawBitmap(backgroundBitmap, matrix, null)
+            val scaledBackground = scaleBitmap(backgroundBitmap, newBackgroundWidth, newBackgroundHeight)
 
-        // Draw the segmentedBitmap on the canvas with the same transformations
-        canvas.drawBitmap(segmentedBitmap, matrix, null)
+            val rotatedBackgroundBitmap = Bitmap.createBitmap(
+                scaledBackground,
+                0,
+                0,
+                scaledBackground.width,
+                scaledBackground.height,
+                matrix,
+                true
+            )
 
-        Log.d(tag, "Drawed the segment on of the background")
+            canvas.drawBitmap(
+                rotatedBackgroundBitmap,
+                0f,
+                0f,
+                paint
+            )
+        }
+
+        canvas.drawBitmap(segmentedBitmap, 0f, 0f, paint)
 
         return outputBitmap
     }
+
+    fun scaleBitmap(bitmap: Bitmap, newWidth: Int, newHeight: Int): Bitmap {
+        val mat = Mat(bitmap.height, bitmap.width, CvType.CV_8UC4)
+        Utils.bitmapToMat(bitmap, mat)
+
+        val resizedMat = Mat(newHeight, newWidth, CvType.CV_8UC4)
+
+        Imgproc.resize(mat, resizedMat, Size(newWidth.toDouble(), newHeight.toDouble()), 0.0, 0.0, Imgproc.INTER_LINEAR)
+
+        val resizedBitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(resizedMat, resizedBitmap)
+
+        return resizedBitmap
+    }
+
 
     /**
      * Creates a bitmap from an array of colors with the specified width and height.

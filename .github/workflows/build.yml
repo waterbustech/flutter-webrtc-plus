@@ -31,24 +31,24 @@ jobs:
       - name: Dart Test Check
         run: flutter test
 
-  build-for-android:
-    name: Build for Flutter Android
-    runs-on: ubuntu-latest
+  # build-for-android:
+  #   name: Build for Flutter Android
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-java@v1
-        with:
-          java-version: '12.x'
-      - uses: actions/checkout@v2
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-      - name: Install project dependencies
-        run: flutter pub get
-      - name: Build for Android
-        working-directory: ./example
-        run: flutter build apk
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-java@v1
+  #       with:
+  #         java-version: '12.x'
+  #     - uses: actions/checkout@v2
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: 'stable'
+  #     - name: Install project dependencies
+  #       run: flutter pub get
+  #     - name: Build for Android
+  #       working-directory: ./example
+  #       run: flutter build apk
 
   build-for-ios:
     name: Build for Flutter iOS

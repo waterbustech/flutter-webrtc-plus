@@ -1,163 +1,200 @@
 package com.cloudwebrtc.webrtc
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.renderscript.Allocation
-import android.renderscript.Element
-import android.renderscript.RenderScript
-import android.renderscript.ScriptIntrinsicBlur
-import com.cloudwebrtc.webrtc.models.BeautyFilter
+import android.util.Log
+import com.cloudwebrtc.webrtc.models.StyleEffect
+import kotlinx.coroutines.coroutineScope
+import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
+import org.opencv.core.Core
+import org.opencv.core.CvType
+import org.opencv.core.CvType.CV_8UC1
+import org.opencv.core.Mat
+import org.opencv.core.Scalar
+import org.opencv.core.Size
+import org.opencv.imgproc.Imgproc
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class CameraFilters {
-
-    fun applyBeautyFilter(context: Context, originalBitmap: Bitmap, beautyFilter: BeautyFilter): Bitmap {
-        // Create a copy of the original bitmap
-        var filteredBitmap = originalBitmap.copy(originalBitmap.config, true)
-
-        // Apply filter
-        for (y in 0 until filteredBitmap.height) {
-            for (x in 0 until filteredBitmap.width) {
-                val pixel = filteredBitmap.getPixel(x, y)
-
-                // Extract RGB components
-                var red = Color.red(pixel)
-                var green = Color.green(pixel)
-                var blue = Color.blue(pixel)
-
-                // Apply contrast
-                red = (red * beautyFilter.contrast).toInt().coerceIn(0, 255)
-                green = (green * beautyFilter.contrast).toInt().coerceIn(0, 255)
-                blue = (blue * beautyFilter.contrast).toInt().coerceIn(0, 255)
-
-                // Apply brightness
-                red = (red * beautyFilter.brightness).toInt().coerceIn(0, 255)
-                green = (green * beautyFilter.brightness).toInt().coerceIn(0, 255)
-                blue = (blue * beautyFilter.brightness).toInt().coerceIn(0, 255)
-
-                // Apply saturation
-                val hsv = FloatArray(3)
-                Color.RGBToHSV(red, green, blue, hsv)
-                hsv[1] = (hsv[1] * beautyFilter.saturation).coerceIn(0.0, 1.0).toFloat()
-                val newColor = Color.HSVToColor(hsv)
-                red = Color.red(newColor)
-                green = Color.green(newColor)
-                blue = Color.blue(newColor)
-
-                // Update pixel
-                filteredBitmap.setPixel(x, y, Color.rgb(red, green, blue))
+    suspend fun applyPhotoFilter(originalBitmap: Bitmap, effect: StyleEffect): Bitmap = coroutineScope {
+        when (effect) {
+            StyleEffect.NORMAL -> {
+                // No additional adjustments needed for the NORMAL style effect
+            }
+            StyleEffect.CLASSIC -> {
+                return@coroutineScope applyClassicEffect(originalBitmap)
+            }
+            StyleEffect.VINTAGE -> {
+                return@coroutineScope applyVintageEffect(originalBitmap)
+            }
+            StyleEffect.CINEMA -> {
+                return@coroutineScope applyCinemaEffect(originalBitmap)
+            }
+            StyleEffect.POP_ART -> {
+                return@coroutineScope applyPopArtEffect(originalBitmap)
+            }
+            StyleEffect.HDR -> {
+                return@coroutineScope applyHDREffect(originalBitmap)
             }
         }
 
-        // Apply blur
-        if (beautyFilter.blurRadius > 0.0) {
-            filteredBitmap = applyBlur(context, filteredBitmap, beautyFilter.blurRadius.toFloat())
-        }
-
-        // Apply noise reduction
-        if (beautyFilter.noiseReduction > 0.0) {
-            filteredBitmap = applyNoiseReduction(filteredBitmap, beautyFilter.noiseReduction.toFloat())
-        }
-
-
-        return filteredBitmap
+        return@coroutineScope originalBitmap
     }
 
-    private fun applyBlur(context: Context, bitmap: Bitmap, radius: Float): Bitmap {
-        // Create a RenderScript context
-        val rs = RenderScript.create(context)
+    private fun applyCinemaEffect(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
 
-        // Allocate memory for input and output bitmaps
-        val input = Allocation.createFromBitmap(rs, bitmap)
-        val output = Allocation.createTyped(rs, input.type)
+        // Apply Cinema effect using OpenCV functions
+        // Example: Convert to grayscale
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY)
 
-        // Create a Gaussian blur script
-        val blurScript = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs))
-        blurScript.setRadius(radius)
+        // Example: Apply Gaussian blur
+        Imgproc.GaussianBlur(mat, mat, Size(5.0, 5.0), 0.0)
 
-        // Run the script
-        blurScript.setInput(input)
-        blurScript.forEach(output)
+        // Example: Increase contrast
+        mat.convertTo(mat, CV_8UC1, 1.5, 0.0)
 
-        // Copy the output bitmap back to the original
-        output.copyTo(bitmap)
+        // Example: Increase brightness
+        mat.convertTo(mat, -1, 1.0, 50.0)
 
-        // Release resources
-        rs.destroy()
-
-        return bitmap
-    }
-
-    private fun applyNoiseReduction(bitmap: Bitmap, strength: Float): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-
-        // Apply a basic averaging filter for noise reduction
-        val newPixels = applyAveragingFilter(pixels, width, height, strength)
-
-        val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        resultBitmap.setPixels(newPixels, 0, width, 0, 0, width, height)
+        // Convert back to Bitmap
+        val resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, resultBitmap)
 
         return resultBitmap
     }
 
-    private fun applyAveragingFilter(
-        pixels: IntArray,
-        width: Int,
-        height: Int,
-        strength: Float
-    ): IntArray {
-        val resultPixels = IntArray(pixels.size)
+    private fun applyClassicEffect(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
 
-        for (y in 0 until height) {
-            for (x in 0 until width) {
-                val index = y * width + x
-                val newPixel = applyAveragingToPixel(pixels, width, height, x, y, strength)
-                resultPixels[index] = newPixel
-            }
-        }
+        // Apply Classic effect using OpenCV functions
+        // Example: Convert to grayscale
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY)
 
-        return resultPixels
+        // Example: Apply Sepia tone
+        applySepiaTone(mat)
+
+        // Example: Increase contrast
+        mat.convertTo(mat, CV_8UC1, 1.2, 0.0)
+
+        // Example: Apply Gaussian blur
+        Imgproc.GaussianBlur(mat, mat, Size(3.0, 3.0), 0.0)
+
+        // Convert back to Bitmap
+        val resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, resultBitmap)
+
+        return resultBitmap
     }
 
-    private fun applyAveragingToPixel(
-        pixels: IntArray,
-        width: Int,
-        height: Int,
-        x: Int,
-        y: Int,
-        strength: Float
-    ): Int {
-        val sumRed = intArrayOf(0)
-        val sumGreen = intArrayOf(0)
-        val sumBlue = intArrayOf(0)
-        val count = intArrayOf(0)
+    private fun applyPopArtEffect(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
 
-        for (i in -1..1) {
-            for (j in -1..1) {
-                val neighborX = x + i
-                val neighborY = y + j
+        // Apply Pop Art effect using OpenCV functions
+        // Example: Increase saturation
+        applyColorOverlay(mat, Scalar(1.5, 1.5, 1.5, 1.0))
 
-                if (neighborX >= 0 && neighborX < width && neighborY >= 0 && neighborY < height) {
-                    val neighborIndex = neighborY * width + neighborX
-                    val neighborColor = pixels[neighborIndex]
+        // Example: Increase contrast
+        mat.convertTo(mat, CV_8UC1, 1.5, 0.0)
 
-                    sumRed[0] += Color.red(neighborColor)
-                    sumGreen[0] += Color.green(neighborColor)
-                    sumBlue[0] += Color.blue(neighborColor)
+        // Convert back to Bitmap
+        val resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, resultBitmap)
 
-                    count[0]++
+        return resultBitmap
+    }
+
+    private fun applyVintageEffect(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
+
+        // Apply Vintage effect using OpenCV functions
+        // Example: Apply Sepia tone
+        applySepiaTone(mat)
+
+        // Example: Apply Vignette
+        applyVignette(mat)
+
+        // Example: Add film grain
+        applyFilmGrain(mat)
+
+        // Convert back to Bitmap
+        val resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, resultBitmap)
+
+        return resultBitmap
+    }
+
+    private fun applyHDREffect(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
+
+        // Apply HDR effect using OpenCV functions
+        // Example: Increase image contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        applyCLAHE(mat)
+
+        // Convert back to Bitmap
+        val resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, resultBitmap)
+
+        return resultBitmap
+    }
+
+    private fun applyCLAHE(mat: Mat) {
+        // Convert to grayscale
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY)
+
+        // Apply CLAHE
+        val clahe = Imgproc.createCLAHE()
+        clahe.apply(mat, mat)
+
+        // Convert back to 4 channels (RGBA)
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_GRAY2RGBA)
+    }
+
+    private fun applyColorOverlay(mat: Mat, overlayColor: Scalar) {
+        Core.addWeighted(mat, 1.0, Mat(mat.size(), CvType.CV_8UC4, overlayColor), -0.5, 0.0, mat)
+    }
+
+    private fun applySepiaTone(mat: Mat) {
+        val sepiaMatrix = Mat(4, 4, CvType.CV_32F)
+        sepiaMatrix.put(0, 0, 0.393, 0.769, 0.189, 0.0)
+        sepiaMatrix.put(1, 0, 0.349, 0.686, 0.168, 0.0)
+        sepiaMatrix.put(2, 0, 0.272, 0.534, 0.131, 0.0)
+        sepiaMatrix.put(3, 0, 0.0, 0.0, 0.0, 1.0)
+
+        Core.transform(mat, mat, sepiaMatrix)
+    }
+
+    private fun applyVignette(mat: Mat) {
+        val rows = mat.rows()
+        val cols = mat.cols()
+        val centerX = (cols / 2).toDouble()
+        val centerY = (rows / 2).toDouble()
+        val radius = min(centerX, centerY) * 0.7
+
+        for (y in 0 until rows) {
+            for (x in 0 until cols) {
+                val distance = sqrt((x - centerX).pow(2.0) + (y - centerY).pow(2.0))
+                val vignetteValue = 1.0 - (distance / radius).pow(2.0)
+
+                // Corrected line: Multiply each channel by the vignetteValue
+                for (c in 0 until mat.channels()) {
+                    mat.put(y, x, mat.get(y, x)[c] * vignetteValue)
                 }
             }
         }
-
-        val averageRed = (sumRed[0] / count[0]).coerceIn(0, 255)
-        val averageGreen = (sumGreen[0] / count[0]).coerceIn(0, 255)
-        val averageBlue = (sumBlue[0] / count[0]).coerceIn(0, 255)
-
-        return Color.rgb(averageRed, averageGreen, averageBlue)
     }
 
+    private fun applyFilmGrain(mat: Mat) {
+        // Example: Add random noise (film grain)
+        val noise = Mat(mat.size(), CvType.CV_8UC4)
+        Core.randu(noise, 0.0, 255.0)
+        Core.addWeighted(mat, 0.9, noise, 0.1, 0.0, mat)
+    }
 }

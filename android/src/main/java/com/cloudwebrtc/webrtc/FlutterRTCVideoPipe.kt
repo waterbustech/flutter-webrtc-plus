@@ -14,13 +14,18 @@ import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.cloudwebrtc.webrtc.models.BeautyFilter
 import com.cloudwebrtc.webrtc.models.CacheFrame
+import com.cloudwebrtc.webrtc.models.StyleEffect
 import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper
+import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper.Companion.DELEGATE_CPU
+import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper.Companion.DELEGATE_GPU
+import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper.Companion.MODEL_SELFIE_MULTICLASS
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
 import com.google.mediapipe.tasks.vision.core.RunningMode
+import kotlinx.coroutines.runBlocking
+import org.opencv.android.OpenCVLoader
 import org.webrtc.EglBase
 import org.webrtc.SurfaceTextureHelper
 import org.webrtc.TextureBufferImpl
@@ -41,29 +46,34 @@ class FlutterRTCVideoPipe {
     private var videoSource: VideoSource? = null
     private var textureHelper: SurfaceTextureHelper? = null
     private var backgroundBitmap: Bitmap? = null
-    private var beautyFilter: BeautyFilter? = null
-    private var expectConfidence = 0.7
+    private var photoEffect: StyleEffect = StyleEffect.NORMAL
+    private var expectConfidence = 0.9
     private var imageSegmentationHelper: ImageSegmenterHelper? = null
     private var sink: VideoSink? = null
     private val bitmapMap = HashMap<Long, CacheFrame>()
     private var lastProcessedFrameTime: Long = 0
     private val targetFrameInterval: Long = 1000 / 24 // 1000 milliseconds divided by 24 FPS
-    private var virtualBackground: FlutterRTCVirtualBackground = FlutterRTCVirtualBackground()
-    private var cameraFilters: CameraFilters = CameraFilters()
+    private val virtualBackground: FlutterRTCVirtualBackground = FlutterRTCVirtualBackground()
+    private val cameraFilters: CameraFilters = CameraFilters()
 
     // Executor for background segmentation
     private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
     fun initialize(context: Context, videoSource: VideoSource) {
+        // Initialize OpenCV
+        if (OpenCVLoader.initLocal()) {
+            Log.d("CameraFilters", "OpenCV loaded")
+        }
+        
         // Enable GPU
         val useGpuTask = TfLiteGpu.isGpuDelegateAvailable(context)
 
-        val interpreterTask = useGpuTask.continueWith { useGpuTask ->
-            if (useGpuTask.result) {
+        useGpuTask.continueWith { resultUseGpu ->
+            if (resultUseGpu.result) {
                 isGpuSupported = true
                 TfLite.initialize(context,
                     TfLiteInitializationOptions.builder()
-                        .setEnableGpuDelegateSupport(useGpuTask.result)
+                        .setEnableGpuDelegateSupport(resultUseGpu.result)
                         .build())
             }
         }
@@ -78,9 +88,8 @@ class FlutterRTCVideoPipe {
                 }
 
                 override fun onResults(resultBundle: ImageSegmenterHelper.ResultBundle) {
-                    val timestampNS = resultBundle.frameTime
-                    val cacheFrame: CacheFrame = bitmapMap[timestampNS] ?: return
-                    bitmapMap.remove(timestampNS)
+                    val timestampMS = resultBundle.frameTime
+                    val cacheFrame: CacheFrame = bitmapMap[timestampMS] ?: return
 
                     val maskFloat = resultBundle.results
                     val maskWidth = resultBundle.width
@@ -95,8 +104,7 @@ class FlutterRTCVideoPipe {
                         maskWidth,
                         maskHeight,
                         bitmap,
-                        bitmap.width,
-                        bitmap.height
+                        0.95,
                     )
 
                     // Create the segmented bitmap from the color array
@@ -110,13 +118,14 @@ class FlutterRTCVideoPipe {
                     // Draw the segmented bitmap on top of the background for human segments
                     val outputBitmap = virtualBackground.drawSegmentedBackground(segmentedBitmap, backgroundBitmap, cacheFrame.originalFrame.rotation)
 
-                    // Apply a filter to reduce noise (if applicable)
                     if (outputBitmap != null) {
                         emitBitmapOnFrame(outputBitmap, cacheFrame)
                     }
+
+                    bitmapMap.remove(timestampMS)
                 }
             })
-        processFrame(context)
+        processFrame()
     }
 
     fun dispose() {
@@ -134,15 +143,11 @@ class FlutterRTCVideoPipe {
         expectConfidence = confidence
     }
 
-    fun setBeautyFilter(filter: BeautyFilter) {
-        beautyFilter = if (filter == BeautyFilter()) {
-            null
-        } else {
-            filter
-        }
+    fun setBeautyFilter(effect: StyleEffect) {
+        photoEffect = effect
     }
 
-    private fun processFrame(context: Context) {
+    private fun processFrame() {
         val eglBase = EglBase.create()
         textureHelper = SurfaceTextureHelper.create("SurfaceTextureThread", eglBase.eglBaseContext)
         videoSource?.setVideoProcessor(object : VideoProcessor {
@@ -158,38 +163,40 @@ class FlutterRTCVideoPipe {
             @RequiresApi(Build.VERSION_CODES.N)
             override fun onFrameCaptured(frame: VideoFrame) {
                 if (sink != null) {
-                    if (backgroundBitmap != null || beautyFilter != null) {
-                        val currentTime = SystemClock.uptimeMillis()
-                        val elapsedSinceLastProcessedFrame = currentTime - lastProcessedFrameTime
+                    val currentTime = System.currentTimeMillis()
+                    val elapsedSinceLastProcessedFrame = currentTime - lastProcessedFrameTime
 
-                        // Check if the elapsed time since the last processed frame is greater than the target interval
-                        if (elapsedSinceLastProcessedFrame >= targetFrameInterval) {
-                            // Process the current frame
-                            lastProcessedFrameTime = currentTime
+                    // Check if the elapsed time since the last processed frame is greater than the target interval
+                    if (elapsedSinceLastProcessedFrame >= targetFrameInterval) {
+                        // Process the current frame
+                        lastProcessedFrameTime = currentTime
 
-                            // Otherwise, perform segmentation on the captured frame and replace the background
-                            var inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
-                            if (inputFrameBitmap != null) {
-                                val cacheFrame = CacheFrame(originalBitmap = inputFrameBitmap, originalFrame = frame)
-                                bitmapMap[lastProcessedFrameTime] = cacheFrame
-
-                                // Apply Filters
-                                if (beautyFilter != null) {
-                                    inputFrameBitmap = cameraFilters.applyBeautyFilter(context, inputFrameBitmap, beautyFilter!!)
-                                }
+                        // Otherwise, perform segmentation on the captured frame and replace the background
+                        val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
+                        if (inputFrameBitmap != null) {
+                            runBlocking {
+                                // Apply beauty filter asynchronously
+                                val filteredBitmap = cameraFilters.applyPhotoFilter(inputFrameBitmap, photoEffect)
 
                                 if (backgroundBitmap != null) {
                                     // Run segmentation in the background
-                                    runSegmentationInBackground(inputFrameBitmap, frameTime = lastProcessedFrameTime)
+                                    val resizeBitmap = virtualBackground.resizeBitmapKeepAspectRatio(filteredBitmap, 512)
+
+                                    // Segment the input bitmap using the ImageSegmentationHelper
+                                    val frameTimeMs: Long = SystemClock.uptimeMillis()
+                                    bitmapMap[frameTimeMs] = CacheFrame(originalBitmap = resizeBitmap, originalFrame = frame)
+
+                                    imageSegmentationHelper?.segmentLiveStreamFrame(resizeBitmap, frameTimeMs)
                                 } else {
-                                    emitBitmapOnFrame(inputFrameBitmap, cacheFrame)
+                                    val cacheFrame = CacheFrame(originalBitmap = inputFrameBitmap, originalFrame = frame)
+                                    bitmapMap[lastProcessedFrameTime] = cacheFrame
+                                    emitBitmapOnFrame(filteredBitmap, cacheFrame)
+                                    bitmapMap.remove(lastProcessedFrameTime)
                                 }
-                            } else {
-                                Log.d(tag, "Convert video frame to bitmap failure")
                             }
+                        } else {
+                            Log.d(tag, "Convert video frame to bitmap failure")
                         }
-                    } else {
-                        sink?.onFrame(frame)
                     }
                 }
             }
@@ -200,16 +207,6 @@ class FlutterRTCVideoPipe {
                 sink = videoSink
             }
         })
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
-    private fun runSegmentationInBackground(
-        inputFrameBitmap: Bitmap,
-        frameTime: Long,
-    ) {
-        executor.execute {
-            virtualBackground.processSegmentation(inputFrameBitmap, frameTime)
-        }
     }
 
     /**
@@ -277,13 +274,15 @@ class FlutterRTCVideoPipe {
         return BitmapFactory.decodeByteArray(jpegData, 0, jpegData.size)
     }
 
-    private fun emitBitmapOnFrame(outputBitmap: Bitmap, cacheFrame: CacheFrame) {
+    private fun emitBitmapOnFrame(originalBitmap: Bitmap, cacheFrame: CacheFrame) {
         // Create a new VideoFrame from the processed bitmap
         val yuvConverter = YuvConverter()
         textureHelper?.handler?.post {
             val textures = IntArray(1)
             GLES20.glGenTextures(1, textures, 0)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
+
+            // Adjust texture coordinates if needed
             GLES20.glTexParameteri(
                 GLES20.GL_TEXTURE_2D,
                 GLES20.GL_TEXTURE_MIN_FILTER,
@@ -294,7 +293,18 @@ class FlutterRTCVideoPipe {
                 GLES20.GL_TEXTURE_MAG_FILTER,
                 GLES20.GL_NEAREST
             )
+
+            // Create a copy of the original bitmap
+            var outputBitmap = originalBitmap.copy(originalBitmap.config, true)
+
+            // Check and adjust bitmap orientation if needed
+            val matrix = Matrix()
+            matrix.postScale(1f, -1f) // Flip vertically
+            outputBitmap = Bitmap.createBitmap(outputBitmap, 0, 0, outputBitmap.width, outputBitmap.height, matrix, true)
+
+            // Update texture with adjusted bitmap
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
+
             val buffer = TextureBufferImpl(
                 outputBitmap.width,
                 outputBitmap.height,
@@ -306,6 +316,7 @@ class FlutterRTCVideoPipe {
                 null
             )
             val i420Buf = yuvConverter.convert(buffer)
+
             if (i420Buf != null) {
                 // Create the output VideoFrame and send it to the sink
                 val outputVideoFrame =
