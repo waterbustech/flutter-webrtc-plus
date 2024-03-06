@@ -6,11 +6,6 @@ import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Rect
-import org.opencv.android.Utils
-import org.opencv.core.CvType
-import org.opencv.core.Mat
-import org.opencv.core.Size
-import org.opencv.imgproc.Imgproc
 import java.nio.ByteBuffer
 import java.nio.FloatBuffer
 
@@ -84,7 +79,7 @@ class FlutterRTCVirtualBackground {
         val scaleY = originalBitmap.height.toFloat() / maskHeight
 
         for (i in 0 until maskWidth * maskHeight) {
-            val humanLikelihood = 1 - mask.float
+            val humanLikelihood = mask.float
 
             if (humanLikelihood >= expectConfidence) {
                 val x = (i % maskWidth * scaleX).toInt()
@@ -97,9 +92,18 @@ class FlutterRTCVirtualBackground {
                     Color.green(originalPixel),
                     Color.blue(originalPixel)
                 )
+            } else if (humanLikelihood in 0.55..0.7) {
+                // Pixel is likely to be semi-transparent
+                val x = (i % maskWidth * scaleX).toInt()
+                val y = (i / maskWidth * scaleY).toInt()
+                val originalPixel = originalBitmap.getPixel(x, y)
+
+                // Adjust alpha value to make it semi-transparent
+                val alpha = 100
+                colors[i] = Color.argb(alpha, Color.red(originalPixel), Color.green(originalPixel), Color.blue(originalPixel))
             } else {
                 // Pixel is likely to be background, make it transparent
-                colors[i] =  Color.argb(0, 0, 0, 0)
+                colors[i] = Color.argb(0, 0, 0, 0)
             }
         }
 
@@ -203,19 +207,17 @@ class FlutterRTCVirtualBackground {
     }
 
     fun scaleBitmap(bitmap: Bitmap, newWidth: Int, newHeight: Int): Bitmap {
-        val mat = Mat(bitmap.height, bitmap.width, CvType.CV_8UC4)
-        Utils.bitmapToMat(bitmap, mat)
+        val width = bitmap.width
+        val height = bitmap.height
 
-        val resizedMat = Mat(newHeight, newWidth, CvType.CV_8UC4)
+        val scaleWidth = newWidth.toFloat() / width
+        val scaleHeight = newHeight.toFloat() / height
 
-        Imgproc.resize(mat, resizedMat, Size(newWidth.toDouble(), newHeight.toDouble()), 0.0, 0.0, Imgproc.INTER_LINEAR)
+        val matrix = Matrix()
+        matrix.postScale(scaleWidth, scaleHeight)
 
-        val resizedBitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(resizedMat, resizedBitmap)
-
-        return resizedBitmap
+        return Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true)
     }
-
 
     /**
      * Creates a bitmap from an array of colors with the specified width and height.

@@ -17,15 +17,11 @@ import androidx.annotation.RequiresApi
 import com.cloudwebrtc.webrtc.models.CacheFrame
 import com.cloudwebrtc.webrtc.models.StyleEffect
 import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper
-import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper.Companion.DELEGATE_CPU
-import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper.Companion.DELEGATE_GPU
-import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper.Companion.MODEL_SELFIE_MULTICLASS
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import kotlinx.coroutines.runBlocking
-import org.opencv.android.OpenCVLoader
 import org.webrtc.EglBase
 import org.webrtc.SurfaceTextureHelper
 import org.webrtc.TextureBufferImpl
@@ -47,24 +43,18 @@ class FlutterRTCVideoPipe {
     private var textureHelper: SurfaceTextureHelper? = null
     private var backgroundBitmap: Bitmap? = null
     private var photoEffect: StyleEffect = StyleEffect.NORMAL
-    private var expectConfidence = 0.9
+    private var expectConfidence = 0.7
     private var imageSegmentationHelper: ImageSegmenterHelper? = null
     private var sink: VideoSink? = null
     private val bitmapMap = HashMap<Long, CacheFrame>()
     private var lastProcessedFrameTime: Long = 0
     private val targetFrameInterval: Long = 1000 / 24 // 1000 milliseconds divided by 24 FPS
     private val virtualBackground: FlutterRTCVirtualBackground = FlutterRTCVirtualBackground()
-    private val cameraFilters: CameraFilters = CameraFilters()
 
     // Executor for background segmentation
     private val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())
 
     fun initialize(context: Context, videoSource: VideoSource) {
-        // Initialize OpenCV
-        if (OpenCVLoader.initLocal()) {
-            Log.d("CameraFilters", "OpenCV loaded")
-        }
-        
         // Enable GPU
         val useGpuTask = TfLiteGpu.isGpuDelegateAvailable(context)
 
@@ -104,7 +94,7 @@ class FlutterRTCVideoPipe {
                         maskWidth,
                         maskHeight,
                         bitmap,
-                        0.95,
+                        expectConfidence,
                     )
 
                     // Create the segmented bitmap from the color array
@@ -175,12 +165,9 @@ class FlutterRTCVideoPipe {
                         val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
                         if (inputFrameBitmap != null) {
                             runBlocking {
-                                // Apply beauty filter asynchronously
-                                val filteredBitmap = cameraFilters.applyPhotoFilter(inputFrameBitmap, photoEffect)
-
                                 if (backgroundBitmap != null) {
                                     // Run segmentation in the background
-                                    val resizeBitmap = virtualBackground.resizeBitmapKeepAspectRatio(filteredBitmap, 512)
+                                    val resizeBitmap = virtualBackground.resizeBitmapKeepAspectRatio(inputFrameBitmap, 512)
 
                                     // Segment the input bitmap using the ImageSegmentationHelper
                                     val frameTimeMs: Long = SystemClock.uptimeMillis()
@@ -190,7 +177,7 @@ class FlutterRTCVideoPipe {
                                 } else {
                                     val cacheFrame = CacheFrame(originalBitmap = inputFrameBitmap, originalFrame = frame)
                                     bitmapMap[lastProcessedFrameTime] = cacheFrame
-                                    emitBitmapOnFrame(filteredBitmap, cacheFrame)
+                                    emitBitmapOnFrame(inputFrameBitmap, cacheFrame)
                                     bitmapMap.remove(lastProcessedFrameTime)
                                 }
                             }
