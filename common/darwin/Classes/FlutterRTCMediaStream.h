@@ -32,4 +32,6 @@
 - (void)selectAudioInput:(nonnull NSString*)deviceId result:(nullable FlutterResult)result;
 
 - (void)selectAudioOutput:(nonnull NSString*)deviceId result:(nullable FlutterResult)result;
+
+- (void)setBackgroundImage:(UIImage *_Nullable)backgroundImage;
 @end

@@ -180,10 +180,9 @@ class Helper {
     required Uint8List backgroundImage,
     double thresholdConfidence = 0.7,
   }) async {
-    if (!WebRTC.platformIsAndroid) return;
     // Invoke the native method "enableVirtualBackground" through WebRTC plugin,
     // passing the backgroundImage and thresholdConfidence as parameters.
-    await WebRTC.invokeMethod("enableVirtualBackground", {
+    WebRTC.invokeMethod("enableVirtualBackground", {
       "imageBytes": backgroundImage,
       "confidence": thresholdConfidence,
     });
@@ -197,9 +196,7 @@ class Helper {
   // Disable Virtual Background feature.
   // This function invokes the native method "disableVirtualBackground" through WebRTC plugin.
   static Future<void> disableVirtualBackground() async {
-    if (!WebRTC.platformIsAndroid) return;
-
-    await WebRTC.invokeMethod("disableVirtualBackground");
+    WebRTC.invokeMethod("disableVirtualBackground");
   }
 
   static Future<void> applyFilter(BeautyFilter filter) async {
