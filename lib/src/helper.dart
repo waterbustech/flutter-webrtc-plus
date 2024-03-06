@@ -188,11 +188,6 @@ class Helper {
     });
   }
 
-  static Future<void> enableGaussianBlur() async {
-    if (!WebRTC.platformIsAndroid) return;
-    await WebRTC.invokeMethod("enableGaussianBlur");
-  }
-
   // Disable Virtual Background feature.
   // This function invokes the native method "disableVirtualBackground" through WebRTC plugin.
   static Future<void> disableVirtualBackground() async {
@@ -203,5 +198,10 @@ class Helper {
     if (!WebRTC.platformIsAndroid) return;
 
     await WebRTC.invokeMethod("applyFilter", filter.toMap());
+  }
+
+  static Future<void> enableGaussianBlur() async {
+    if (!WebRTC.platformIsAndroid) return;
+    await WebRTC.invokeMethod("enableGaussianBlur");
   }
 }

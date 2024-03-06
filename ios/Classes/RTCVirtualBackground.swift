@@ -33,7 +33,9 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
         }
         DispatchQueue.main.async(execute: {
             if #available(iOS 17.0, *) {
-                let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+                let inputFrameImage = CIImage(cvPixelBuffer: pixelBuffer).resize()
+                
+                let handler = VNImageRequestHandler(ciImage: inputFrameImage!, options: [:])
                 do {
                     try handler.perform([maskRequest!])
                     if let observation = maskRequest!.results?.first {
@@ -167,3 +169,13 @@ extension UIImage {
    }
 }
 
+extension CIImage {
+    func resize() -> CIImage? {
+        let scale = 420 / self.extent.width
+        
+        let transformation = CGAffineTransform(scaleX: scale, y: scale)
+        let transformedImage = self.transformed(by: transformation)
+        
+        return transformedImage
+    }
+}
