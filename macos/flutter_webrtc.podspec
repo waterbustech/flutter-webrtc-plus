@@ -16,5 +16,6 @@ A new flutter plugin project.
 
   s.dependency 'FlutterMacOS'
   s.dependency 'WebRTC-SDK', '114.5735.08'
-  s.osx.deployment_target = '10.13'
+  s.osx.deployment_target = '11.0'
+
 end

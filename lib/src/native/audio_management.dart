@@ -15,6 +15,8 @@ class NativeAudioManagement {
   }
 
   static Future<void> setSpeakerphoneOn(bool enable) async {
+    if (WebRTC.platformIsDesktop) return;
+
     await WebRTC.invokeMethod(
       'enableSpeakerphone',
       <String, dynamic>{'enable': enable},

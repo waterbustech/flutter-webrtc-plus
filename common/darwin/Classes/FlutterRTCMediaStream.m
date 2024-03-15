@@ -129,7 +129,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
     successCallback(mediaStream);
 }
 
-- (void)setBackgroundImage:(UIImage *_Nullable)backgroundImage {
+- (void)setBackgroundImage:(CIImage *_Nullable)backgroundImage {
     [videoPipe setBackgroundImageWithImage:backgroundImage];
 }
 
@@ -426,9 +426,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
         
         videoPipe = [[RTCVideoPipe alloc] initWithVideoSource: videoSource];
         
-        [videoSource setDelegate:videoPipe];
-        
-        self.videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:videoSource];
+        self.videoCapturer = [[RTCCameraVideoCapturer alloc] initWithDelegate:videoPipe];
         
         AVCaptureDeviceFormat* selectedFormat = [self selectFormatForDevice:videoDevice
                                                                 targetWidth:targetWidth

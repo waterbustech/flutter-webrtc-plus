@@ -180,6 +180,7 @@ class Helper {
     required Uint8List backgroundImage,
     double thresholdConfidence = 0.7,
   }) async {
+    if (!WebRTC.platformIsMobile && !WebRTC.platformIsMacOS) return;
     // Invoke the native method "enableVirtualBackground" through WebRTC plugin,
     // passing the backgroundImage and thresholdConfidence as parameters.
     WebRTC.invokeMethod("enableVirtualBackground", {
@@ -191,6 +192,8 @@ class Helper {
   // Disable Virtual Background feature.
   // This function invokes the native method "disableVirtualBackground" through WebRTC plugin.
   static Future<void> disableVirtualBackground() async {
+    if (!WebRTC.platformIsMobile && !WebRTC.platformIsMacOS) return;
+
     WebRTC.invokeMethod("disableVirtualBackground");
   }
 
@@ -202,6 +205,7 @@ class Helper {
 
   static Future<void> enableGaussianBlur() async {
     if (!WebRTC.platformIsAndroid) return;
+
     await WebRTC.invokeMethod("enableGaussianBlur");
   }
 }

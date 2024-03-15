@@ -117,8 +117,9 @@ static NSString *sharedPeerConnectionId;
 @synthesize messenger = _messenger;
 @synthesize eventSink = _eventSink;
 @synthesize preferredInput = _preferredInput;
+#if TARGET_OS_IPHONE
 @synthesize backgroundImage = _backgroundImage;
-
+#endif
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   FlutterMethodChannel* channel =
       [FlutterMethodChannel methodChannelWithName:@"FlutterWebRTC.Method"
@@ -892,11 +893,13 @@ static NSString *sharedPeerConnectionId;
     NSDictionary* configuration = argsMap[@"configuration"];
     [AudioUtils setAppleAudioConfiguration:configuration];
     result(nil);
-  } else if([@"enableVirtualBackground" isEqualToString:call.method]) {
+  }
+#endif
+  else if([@"enableVirtualBackground" isEqualToString:call.method]) {
       NSDictionary* arguments = call.arguments;
       FlutterStandardTypedData *imageData = arguments[@"imageBytes"];
       if ([imageData isKindOfClass:[FlutterStandardTypedData class]]) {
-          UIImage *image = [UIImage imageWithData:imageData.data];
+          CIImage *image = [CIImage imageWithData:imageData.data];
           if (image) {
               _backgroundImage = image;
               result(nil);
@@ -909,7 +912,6 @@ static NSString *sharedPeerConnectionId;
       result(nil);
       [self setBackgroundImage:_backgroundImage];
   }
-#endif
   else if ([@"getLocalDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSString* peerConnectionId = argsMap[@"peerConnectionId"];
