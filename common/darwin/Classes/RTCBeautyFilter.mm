@@ -112,8 +112,6 @@ using namespace gpupixel;
             CVPixelBufferRelease(pixelBuffer);
         };
         
-        
-        // Truyền biến lambda vào hàm setPixelsCallbck
         targetRawOutput_->setPixelsCallbck(callback);
         
         

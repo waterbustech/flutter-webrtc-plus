@@ -134,6 +134,31 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
     [videoPipe setBackgroundImageWithImage:backgroundImage];
 }
 
+- (void)setThinValue:(CGFloat)value {
+    [videoPipe setThinFaceValueWithValue:value];
+}
+
+- (void)setWhiteValue:(CGFloat)value {
+    [videoPipe setWhiteValueWithValue:value];
+}
+
+- (void)setBigEyeValue:(CGFloat)value {
+    [videoPipe setBigEyeValueWithValue:value];
+}
+
+- (void)setLipstickValue:(CGFloat)value {
+    [videoPipe setLipstickValueWithValue:value];
+}
+
+- (void)setBlusherValue:(CGFloat)value {
+    [videoPipe setBlusherValueWithValue:value];
+}
+
+- (void)setSmoothValue:(CGFloat)value {
+    [videoPipe setSmoothValueWithValue:value];
+}
+
+
 // TODO: Use RCTConvert for constraints ...
 - (void)getUserMedia:(NSDictionary*)constraints result:(FlutterResult)result {
     // Initialize RTCMediaStream with a unique label in order to allow multiple

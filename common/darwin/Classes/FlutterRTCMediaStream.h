@@ -36,4 +36,11 @@
 
 - (void)setBackgroundImage:(CIImage *_Nullable)backgroundImage;
 
+- (void)setThinValue:(CGFloat)value;
+- (void)setSmoothValue:(CGFloat)value;
+- (void)setWhiteValue:(CGFloat)value;
+- (void)setLipstickValue:(CGFloat)value;
+- (void)setBigEyeValue:(CGFloat)value;
+- (void)setBlusherValue:(CGFloat)value;
+
 @end

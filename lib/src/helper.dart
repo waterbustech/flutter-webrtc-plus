@@ -197,15 +197,41 @@ class Helper {
     WebRTC.invokeMethod("disableVirtualBackground");
   }
 
-  static Future<void> applyFilter(BeautyFilter filter) async {
-    if (!WebRTC.platformIsAndroid) return;
+  // MARK: Adjust beauty value
 
-    await WebRTC.invokeMethod("applyFilter", filter.toMap());
+  static Future<void> setThinFaceValue(double value) async {
+    if (!WebRTC.platformIsDarwin) return;
+
+    WebRTC.invokeMethod("setThinValue", {"value": value});
   }
 
-  static Future<void> enableGaussianBlur() async {
-    if (!WebRTC.platformIsAndroid) return;
+  static Future<void> setBigEyeValue(double value) async {
+    if (!WebRTC.platformIsDarwin) return;
 
-    await WebRTC.invokeMethod("enableGaussianBlur");
+    WebRTC.invokeMethod("setBigEyeValue", {"value": value});
+  }
+
+  static Future<void> setSmoothValue(double value) async {
+    if (!WebRTC.platformIsDarwin) return;
+
+    WebRTC.invokeMethod("setSmoothValue", {"value": value});
+  }
+
+  static Future<void> setLipstickValue(double value) async {
+    if (!WebRTC.platformIsDarwin) return;
+
+    WebRTC.invokeMethod("setLipstickValue", {"value": value});
+  }
+
+  static Future<void> setBlusherValue(double value) async {
+    if (!WebRTC.platformIsDarwin) return;
+
+    WebRTC.invokeMethod("setBlusherValue", {"value": value});
+  }
+
+  static Future<void> setWhiteValue(double value) async {
+    if (!WebRTC.platformIsDarwin) return;
+
+    WebRTC.invokeMethod("setWhiteValue", {"value": value});
   }
 }

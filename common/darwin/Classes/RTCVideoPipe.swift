@@ -11,17 +11,10 @@ import WebRTC
 @objc public class RTCVideoPipe: NSObject, RTCVideoCapturerDelegate {
     var beautyFilter: RTCBeautyFilter?
     var beautyFilterDelegate: BeautyFilterDelegate?
-    var videoSource: RTCVideoSource?
     
     @objc public init(videoSource: RTCVideoSource) {
         self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource)
         self.beautyFilter = RTCBeautyFilter.init(delegate: self.beautyFilterDelegate)
-        self.videoSource = videoSource
-        
-        self.beautyFilter?.thinFaceValue = 0.02
-        self.beautyFilter?.lipstickValue = 0.5
-        self.beautyFilter?.blusherValue = 0.5
-        self.beautyFilter?.eyeValue = 0.2
         
         super.init()
     }
@@ -42,13 +35,36 @@ import WebRTC
         
         self.beautyFilter?.processVideoFrame(pixelBuffer)
     }
+    
+    @objc public func setThinFaceValue(value: CGFloat) {
+        self.beautyFilter?.thinFaceValue = value
+    }
+    
+    @objc public func setLipstickValue(value: CGFloat) {
+        self.beautyFilter?.lipstickValue = value
+    }
+    
+    @objc public func setBlusherValue(value: CGFloat) {
+        self.beautyFilter?.blusherValue = value
+    }
+    
+    @objc public func setBigEyeValue(value: CGFloat) {
+        self.beautyFilter?.eyeValue = value
+    }
+    
+    @objc public func setSmoothValue(value: CGFloat) {
+        self.beautyFilter?.beautyValue = value
+    }
+    
+    @objc public func setWhiteValue(value: CGFloat) {
+        self.beautyFilter?.whithValue = value
+    }
 }
 
 extension RTCVideoPipe {
     func convertRTCVideoFrameToPixelBuffer(_ rtcVideoFrame: RTCVideoFrame) -> CVPixelBuffer? {
         if let remotePixelBuffer = rtcVideoFrame.buffer as? RTCCVPixelBuffer {
             let pixelBuffer = remotePixelBuffer.pixelBuffer
-            // Now you have access to 'pixelBuffer' for further use
             let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
             return ciImage.convertCIImageToCVPixelBuffer()
         } else {
@@ -206,17 +222,16 @@ extension CVPixelBuffer {
 
 extension CIImage {
     func convertCIImageToCVPixelBuffer() -> CVPixelBuffer? {
-        // Tạo một context bitmap mới với thuộc tính tùy chỉnh
+        
         let options: [CIContextOption: Any] = [
-            .useSoftwareRenderer: false // Sử dụng GPU renderer
+            .useSoftwareRenderer: false
         ]
         let ciContext = CIContext(options: options)
         
-        // Lấy kích thước của CIImage
+        
         let width = Int(self.extent.width)
         let height = Int(self.extent.height)
         
-        // Tạo pixel buffer attributes
         let pixelBufferAttributes: [String: Any] = [
             kCVPixelBufferCGImageCompatibilityKey as String: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey as String: true,
@@ -226,7 +241,6 @@ extension CIImage {
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
         
-        // Tạo CVPixelBuffer
         var pixelBuffer: CVPixelBuffer?
         let status = CVPixelBufferCreate(kCFAllocatorDefault,
                                          width,
@@ -238,7 +252,6 @@ extension CIImage {
             return nil
         }
         
-        // Render CIImage vào CVPixelBuffer
         ciContext.render(self, to: finalPixelBuffer)
         
         return finalPixelBuffer

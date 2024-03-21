@@ -911,6 +911,60 @@ static NSString *sharedPeerConnectionId;
       _backgroundImage = nil;
       result(nil);
       [self setBackgroundImage:_backgroundImage];
+  }else if([@"setThinValue" isEqualToString:call.method]) {
+      NSDictionary *arguments = call.arguments;
+      NSNumber *numberValue = arguments[@"value"];
+      
+      if (numberValue != nil && [numberValue isKindOfClass:[NSNumber class]]) {
+          CGFloat floatValue = [numberValue floatValue];
+          [self setThinValue:floatValue];
+      }
+      result(nil);
+  }else if([@"setSmoothValue" isEqualToString:call.method]) {
+      NSDictionary *arguments = call.arguments;
+      NSNumber *numberValue = arguments[@"value"];
+      
+      if (numberValue != nil && [numberValue isKindOfClass:[NSNumber class]]) {
+          CGFloat floatValue = [numberValue floatValue];
+          [self setSmoothValue:floatValue];
+      }
+      result(nil);
+  }else if([@"setBigEyeValue" isEqualToString:call.method]) {
+      NSDictionary *arguments = call.arguments;
+      NSNumber *numberValue = arguments[@"value"];
+      
+      if (numberValue != nil && [numberValue isKindOfClass:[NSNumber class]]) {
+          CGFloat floatValue = [numberValue floatValue];
+          [self setBigEyeValue:floatValue];
+      }
+      result(nil);
+  }else if([@"setLipstickValue" isEqualToString:call.method]) {
+      NSDictionary *arguments = call.arguments;
+      NSNumber *numberValue = arguments[@"value"];
+      
+      if (numberValue != nil && [numberValue isKindOfClass:[NSNumber class]]) {
+          CGFloat floatValue = [numberValue floatValue];
+          [self setLipstickValue:floatValue];
+      }
+      result(nil);
+  }else if([@"setBlusherValue" isEqualToString:call.method]) {
+      NSDictionary *arguments = call.arguments;
+      NSNumber *numberValue = arguments[@"value"];
+      
+      if (numberValue != nil && [numberValue isKindOfClass:[NSNumber class]]) {
+          CGFloat floatValue = [numberValue floatValue];
+          [self setBlusherValue:floatValue];
+      }
+      result(nil);
+  }else if([@"setWhiteValue" isEqualToString:call.method]) {
+      NSDictionary *arguments = call.arguments;
+      NSNumber *numberValue = arguments[@"value"];
+      
+      if (numberValue != nil && [numberValue isKindOfClass:[NSNumber class]]) {
+          CGFloat floatValue = [numberValue floatValue];
+          [self setWhiteValue:floatValue];
+      }
+      result(nil);
   }
   else if ([@"getLocalDescription" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
