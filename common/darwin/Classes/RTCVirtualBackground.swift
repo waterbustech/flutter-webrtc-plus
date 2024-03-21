@@ -94,11 +94,15 @@ extension RTCVirtualBackground {
             // Resize background image if necessary
 #if os(macOS)
             let size = CGSize(width: 1920, height: 1080)
+            
+            let rotateBackground = backgroundImage.oriented(.upMirrored)
 #elseif os(iOS)
-            let size = CGSize(width: 1280, height: 720)
+            let size = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
+            
+            let rotateBackground = backgroundImage.oriented(.leftMirrored)
 #endif
             
-            let resizedBackground = backgroundImage.transformed(by: CGAffineTransform(scaleX: size.width / backgroundImage.extent.width, y: size.height / backgroundImage.extent.height))
+            let resizedBackground = rotateBackground.transformed(by: CGAffineTransform(scaleX: size.width / rotateBackground.extent.width, y: size.height / rotateBackground.extent.height))
             
             // Create CIImage from pixelBuffer
             let maskedCIImage = CIImage(cvPixelBuffer: pixelBuffer)
