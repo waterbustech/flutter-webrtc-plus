@@ -17,5 +17,8 @@ A new flutter plugin project.
   s.dependency 'Flutter'
   s.dependency 'KaiRTC', '122.6261.01'
   s.ios.deployment_target = '12.0'
-  s.static_framework = true
+  s.preserve_paths = 'gpupixel.framework', 'vnn_core_ios.framework', 'vnn_face_ios.framework', 'vnn_kit_ios.framework'
+  s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_ios.framework', 'vnn_face_ios.framework', 'vnn_kit_ios.framework'
+  s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel', 'vnn_core_ios', 'vnn_face_ios', 'vnn_kit_ios'
+  # s.static_framework = true
 end

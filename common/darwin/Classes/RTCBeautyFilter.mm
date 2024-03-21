@@ -1,8 +1,8 @@
 //
 //  RTCBeautyFilter.mm
-//  SimpleVideoFilter
+//  flutter_webrtc
 //
-//  Created by PixPark on 2021/8/25.
+//  Created by lambiengcode on 19/03/2024.
 //
 
 #import "RTCBeautyFilter.h"
@@ -65,6 +65,28 @@ using namespace gpupixel;
             
             size_t stride = width * 4;
             
+        #if TARGET_OS_IOS || TARGET_OS_SIMULATOR
+            // iOS: Use original data directly for BGRA format
+            // Create pixel buffer attributes
+            NSDictionary *options = @{
+                (NSString *)kCVPixelBufferCGImageCompatibilityKey: @YES,
+                (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey: @YES
+            };
+            
+            // Create pixel buffer
+            CVReturn result = CVPixelBufferCreateWithBytes(kCFAllocatorDefault,
+                                                           width,
+                                                           height,
+                                                           kCVPixelFormatType_32BGRA,
+                                                           (void *)data,
+                                                           stride,
+                                                           NULL,
+                                                           NULL,
+                                                           (__bridge CFDictionaryRef)options,
+                                                           &pixelBuffer);
+            
+        #else
+            // macOS: Convert ABGR or BGRA to ARGB
             // Create a new buffer to store ARGB pixel data
             uint8_t* argbData = (uint8_t*)malloc(stride * height);
             if (!argbData) {
@@ -99,6 +121,7 @@ using namespace gpupixel;
                                                            &pixelBuffer);
             
             free(argbData);  // Free the memory allocated for ARGB data
+        #endif
             
             if (result != kCVReturnSuccess) {
                 NSLog(@"Error: Unable to create CVPixelBuffer");

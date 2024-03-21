@@ -20,7 +20,4 @@ A new flutter plugin project.
   s.preserve_paths = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
   s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
   s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel', 'vnn_core_osx', 'vnn_face_osx', 'vnn_kit_osx'
-  # s.resource_bundles = {
-  #   'flutter_webrtc_resources' => ['gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework']
-  # }
 end
