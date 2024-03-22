@@ -31,7 +31,6 @@ import WebRTC
             print("Failed to convert RTCVideoFrame to CVPixelBuffer")
             return
         }
-
         
         self.beautyFilter?.processVideoFrame(pixelBuffer)
     }
@@ -66,11 +65,19 @@ extension RTCVideoPipe {
         if let remotePixelBuffer = rtcVideoFrame.buffer as? RTCCVPixelBuffer {
             let pixelBuffer = remotePixelBuffer.pixelBuffer
             let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+            
+            #if os(iOS)
+            let rotatedCIImage = ciImage.oriented(.right)
+            let rotatedPixelBuffer = rotatedCIImage.convertCIImageToCVPixelBuffer()
+            return rotatedPixelBuffer
+            #elseif os(macOS)
             return ciImage.convertCIImageToCVPixelBuffer()
+            #endif
         } else {
             print("Error: RTCVideoFrame buffer is not of type RTCCVPixelBuffer")
             return nil
         }
+
     }
 }
 
@@ -92,46 +99,37 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     }
     
     func didReceive(_ pixelBuffer: CVPixelBuffer!, width: Int32, height: Int32, timestamp: Int64) {
-        let timestampNs = DispatchTime.now().uptimeNanoseconds
-        
-        guard let frame: RTCVideoFrame = pixelBuffer.convertPixelBufferToRTCVideoFrame(rotation: rotate, timeStampNs: Int64(timestampNs)) else {
-            return
-        }
-        
-        guard let capturer = rtcVideoCapturer else {
-            return
-        }
-        
         if backgroundImage == nil {
+            let timestampNs = DispatchTime.now().uptimeNanoseconds
+            
+            guard let frame: RTCVideoFrame = pixelBuffer.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
+                return
+            }
+            
+            guard let capturer = rtcVideoCapturer else {
+                return
+            }
+            
             self.videoSource?.capturer(capturer, didCapture: frame)
             return
         }
         
-        virtualBackground?.processForegroundMask(from: frame, backgroundImage: backgroundImage!) { processedFrame, error in
+        virtualBackground?.processForegroundMask(from: pixelBuffer, backgroundImage: backgroundImage!) { bufferProcessed, error in
             if let error = error {
                 // Handle error
                 print("Error processing foreground mask: \(error.localizedDescription)")
-            } else if let processedFrame = processedFrame {
-                let currentTimestamp = frame.timeStampNs
+            } else if bufferProcessed != nil {
+                let timestampNs = DispatchTime.now().uptimeNanoseconds
                 
-                // Calculate the time since the last processed frame
-                let elapsedTimeSinceLastProcessedFrame = currentTimestamp - self.lastProcessedTimestamp
-                
-                if elapsedTimeSinceLastProcessedFrame < self.fpsInterval {
-                    // Skip processing the frame if it's too soon
+                guard let frame: RTCVideoFrame = bufferProcessed!.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
                     return
                 }
                 
-                self.lastProcessedTimestamp = currentTimestamp
-                
-                if processedFrame.timeStampNs <= self.latestTimestampNs {
-                    // Skip emitting frame if its timestamp is not newer than the latest one
+                guard let capturer = self.rtcVideoCapturer else {
                     return
                 }
                 
-                self.latestTimestampNs = processedFrame.timeStampNs
-                
-                self.videoSource?.capturer(capturer, didCapture: processedFrame)
+                self.videoSource?.capturer(capturer, didCapture: frame)
             }
         }
     }
@@ -256,4 +254,27 @@ extension CIImage {
         
         return finalPixelBuffer
     }
+    
+    // func saveCIImageToDisk(fileName: String) -> Bool {
+    //     guard let cgImage = CIContext().createCGImage(self, from: self.extent) else {
+    //         print("Failed to create CGImage from CIImage")
+    //         return false
+    //     }
+        
+    //     guard let data = UIImage(cgImage: cgImage).jpegData(compressionQuality: 1.0) else {
+    //         print("Failed to convert CGImage to JPEG data")
+    //         return false
+    //     }
+        
+    //     do {
+    //         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    //         let fileURL = documentsURL.appendingPathComponent(fileName)
+    //         try data.write(to: fileURL)
+    //         print("CIImage saved successfully to: \(fileURL.path)")
+    //         return true
+    //     } catch {
+    //         print("Failed to write data to file: \(error.localizedDescription)")
+    //         return false
+    //     }
+    // }
 }

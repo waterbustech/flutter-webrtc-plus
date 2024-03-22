@@ -1,6 +1,6 @@
-library flutter_webrtc;
+library flutter_webrtc_plus;
 
-export 'package:webrtc_interface/webrtc_interface.dart'
+export 'package:webrtc_interface_plus/webrtc_interface_plus.dart'
     hide MediaDevices, MediaRecorder, Navigator;
 
 export 'src/helper.dart';
@@ -17,4 +17,3 @@ export 'src/native/utils.dart' if (dart.library.html) 'src/web/utils.dart';
 export 'src/native/adapter_type.dart';
 export 'src/native/android/audio_configuration.dart';
 export 'src/native/ios/audio_configuration.dart';
-export 'src/models/beauty_filter.dart';

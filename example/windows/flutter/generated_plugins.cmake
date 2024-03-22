@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  flutter_webrtc
+  flutter_webrtc_plus
   permission_handler_windows
 )
 

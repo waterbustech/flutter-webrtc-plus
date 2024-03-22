@@ -1,4 +1,4 @@
-import 'package:webrtc_interface/webrtc_interface.dart';
+import 'package:webrtc_interface_plus/webrtc_interface_plus.dart';
 
 import 'mediadevices_impl.dart';
 

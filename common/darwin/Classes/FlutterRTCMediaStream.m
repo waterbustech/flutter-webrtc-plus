@@ -3,7 +3,7 @@
 #import "FlutterRTCFrameCapturer.h"
 #import "FlutterRTCMediaStream.h"
 #import "FlutterRTCPeerConnection.h"
-#import "flutter_webrtc/flutter_webrtc-Swift.h"
+#import "flutter_webrtc_plus/flutter_webrtc_plus-Swift.h"
 //#import "RTCBeautyFilter.h"
 
 @implementation RTCMediaStreamTrack (Flutter)

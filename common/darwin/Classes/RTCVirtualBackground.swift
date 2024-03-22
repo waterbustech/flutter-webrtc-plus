@@ -15,7 +15,7 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
 
 @objc public class RTCVirtualBackground: NSObject {
     
-    public typealias ForegroundMaskCompletion = (RTCVideoFrame?, Error?) -> Void
+    public typealias ForegroundMaskCompletion = (CVPixelBuffer?, Error?) -> Void
     
     public override init() {
         if #available(iOS 17.0, macOS 14.0, *) {
@@ -27,16 +27,13 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
         }
     }
     
-    public func processForegroundMask(from videoFrame: RTCVideoFrame, backgroundImage: CIImage, completion: @escaping ForegroundMaskCompletion) {
-        guard let pixelBuffer = convertRTCVideoFrameToPixelBuffer(videoFrame) else {
-            print("Failed to convert RTCVideoFrame to CVPixelBuffer")
-            return
-        }
+    public func processForegroundMask(from pixelBuffer: CVPixelBuffer, backgroundImage: CIImage, completion: @escaping ForegroundMaskCompletion) {
         DispatchQueue.global(qos: .userInitiated).async {
             if #available(iOS 17.0, macOS 14.0, *) {
-                let inputFrameImage = CIImage(cvPixelBuffer: pixelBuffer).resize()
-                
-                let handler = VNImageRequestHandler(ciImage: inputFrameImage!, options: [:])
+                guard let inputFrameImage = CIImage(cvPixelBuffer: pixelBuffer).resize() else {
+                    return
+                }
+                let handler = VNImageRequestHandler(ciImage: inputFrameImage, options: [:])
                 do {
                     try handler.perform([maskRequest!])
                     if let observation = maskRequest!.results?.first {
@@ -46,8 +43,8 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
                             
                             self.applyForegroundMask(to: maskedImage, backgroundImage: backgroundImage) { maskedPixelBuffer, error in
                                 if let maskedPixelBuffer = maskedPixelBuffer {
-                                    let frameProcessed = self.convertPixelBufferToRTCVideoFrame(maskedPixelBuffer, rotation: videoFrame.rotation, timeStampNs: videoFrame.timeStampNs)
-                                    completion(frameProcessed, nil)
+                                    
+                                    completion(maskedPixelBuffer, nil)
                                 } else {
                                     completion(nil, error)
                                 }
@@ -68,25 +65,6 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
 }
 
 extension RTCVirtualBackground {
-    func convertPixelBufferToRTCVideoFrame(_ pixelBuffer: CVPixelBuffer, rotation: RTCVideoRotation, timeStampNs: Int64) -> RTCVideoFrame? {
-        let rtcPixelBuffer = RTCCVPixelBuffer(pixelBuffer: pixelBuffer)
-        
-        let rtcVideoFrame = RTCVideoFrame(buffer: rtcPixelBuffer, rotation: rotation, timeStampNs: timeStampNs)
-        
-        return rtcVideoFrame
-    }
-    
-    func convertRTCVideoFrameToPixelBuffer(_ rtcVideoFrame: RTCVideoFrame) -> CVPixelBuffer? {
-        if let remotePixelBuffer = rtcVideoFrame.buffer as? RTCCVPixelBuffer {
-            let pixelBuffer = remotePixelBuffer.pixelBuffer
-            // Now you have access to 'pixelBuffer' for further use
-            return pixelBuffer
-        } else {
-            print("Error: RTCVideoFrame buffer is not of type RTCCVPixelBuffer")
-            return nil
-        }
-    }
-    
     func applyForegroundMask(to pixelBuffer: CVPixelBuffer, backgroundImage: CIImage, completion: @escaping (CVPixelBuffer?, Error?) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             let ciContext = CIContext()
@@ -99,7 +77,7 @@ extension RTCVirtualBackground {
 #elseif os(iOS)
             let size = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
             
-            let rotateBackground = backgroundImage.oriented(.leftMirrored)
+            let rotateBackground = backgroundImage.oriented(.upMirrored)
 #endif
             
             let resizedBackground = rotateBackground.transformed(by: CGAffineTransform(scaleX: size.width / rotateBackground.extent.width, y: size.height / rotateBackground.extent.height))

@@ -5,7 +5,7 @@
 import FlutterMacOS
 import Foundation
 
-import flutter_webrtc
+import flutter_webrtc_plus
 import path_provider_foundation
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:webrtc_interface/webrtc_interface.dart';
+import 'package:webrtc_interface_plus/webrtc_interface_plus.dart';
 
 import '../desktop_capturer.dart';
 import 'desktop_capturer_impl.dart';

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:flutter_webrtc_plus/flutter_webrtc_plus.dart';
 
 class CaptureFrameSample extends StatefulWidget {
   @override

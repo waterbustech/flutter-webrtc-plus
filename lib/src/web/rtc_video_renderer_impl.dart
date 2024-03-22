@@ -6,7 +6,7 @@ import 'dart:ui_web' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'package:dart_webrtc/dart_webrtc.dart';
+import 'package:dart_webrtc_plus/dart_webrtc_plus.dart';
 
 // An error code value to error name Map.
 // See: https://developer.mozilla.org/en-US/docs/Web/API/MediaError/code
