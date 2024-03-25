@@ -22,7 +22,7 @@ class WebRTC {
 
   static bool get platformIsWeb => false;
 
-  static bool get platformIsDarwin => platformIsIOS || platformIsMacOS;
+  static bool get platformIsDarwin => Platform.isIOS || Platform.isMacOS;
 
   static Future<T?> invokeMethod<T, P>(String methodName,
       [dynamic param]) async {

@@ -1,6 +1,6 @@
 name: flutter_webrtc_plus
 description: Flutter WebRTC plugin for iOS/Android/Destkop/Web, based on GoogleWebRTC.
-version: 0.9.48+6
+version: 0.9.48+7
 homepage: https://github.com/waterbustech/flutter-webrtc-plus
 
 environment:
