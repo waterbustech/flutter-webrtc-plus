@@ -50,20 +50,20 @@ jobs:
   #       working-directory: ./example
   #       run: flutter build apk
 
-  build-for-ios:
-    name: Build for Flutter iOS
-    runs-on: macos-latest
+  # build-for-ios:
+  #   name: Build for Flutter iOS
+  #   runs-on: macos-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-      - name: Install project dependencies
-        run: flutter pub get
-      - name: Build for iOS
-        working-directory: ./example
-        run: flutter build ios --release --no-codesign
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: 'stable'
+  #     - name: Install project dependencies
+  #       run: flutter pub get
+  #     - name: Build for iOS
+  #       working-directory: ./example
+  #       run: flutter build ios --release --no-codesign
 
   # build-for-windows:
   #   name: Build for flutter Windows
@@ -80,20 +80,20 @@ jobs:
   #       working-directory: ./example
   #       run: flutter build windows --release
 
-  build-for-macos:
-    name: Build for flutter macOS
-    runs-on: macos-latest
+  # build-for-macos:
+  #   name: Build for flutter macOS
+  #   runs-on: macos-latest
 
-    steps:
-      - uses: actions/checkout@v2
-      - uses: subosito/flutter-action@v1
-        with:
-          channel: 'stable'
-      - name: Install project dependencies
-        run: flutter pub get
-      - name: Build for macOS
-        working-directory: ./example
-        run: flutter build macos --release
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: subosito/flutter-action@v1
+  #       with:
+  #         channel: 'stable'
+  #     - name: Install project dependencies
+  #       run: flutter pub get
+  #     - name: Build for macOS
+  #       working-directory: ./example
+  #       run: flutter build macos --release
 
   # build-for-linux:
   #   name: Build for Flutter Linux
