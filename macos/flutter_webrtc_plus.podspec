@@ -15,7 +15,7 @@ A new flutter plugin project.
   s.source_files     = ['Classes/**/*']
 
   s.dependency 'FlutterMacOS'
-  s.dependency 'KaiRTC', '122.6261.07'
+  s.dependency 'KaiRTC', '124.6367.01'
   s.osx.deployment_target = '11.0'
   s.preserve_paths = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
   s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'

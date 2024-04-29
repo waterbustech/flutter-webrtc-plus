@@ -118,7 +118,7 @@ extension RTCVirtualBackground {
 extension CIImage {
     func resize() -> CIImage? {
 #if os(macOS)
-        let scale = 1080 / self.extent.width
+        let scale = 1.0
 #elseif os(iOS)
         let scale = 720 / self.extent.width
 #endif

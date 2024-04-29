@@ -66,26 +66,24 @@ extension RTCVideoPipe {
             let pixelBuffer = remotePixelBuffer.pixelBuffer
             let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
             
-            #if os(iOS)
+#if os(iOS)
             let rotatedCIImage = ciImage.oriented(.right)
             let rotatedPixelBuffer = rotatedCIImage.convertCIImageToCVPixelBuffer()
             return rotatedPixelBuffer
-            #elseif os(macOS)
+#elseif os(macOS)
             return ciImage.convertCIImageToCVPixelBuffer()
-            #endif
+#endif
         } else {
             print("Error: RTCVideoFrame buffer is not of type RTCCVPixelBuffer")
             return nil
         }
-
+        
     }
 }
 
 class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
-    var latestTimestampNs: Int64 = 0
-    var frameCount: Int = 0
-    var lastProcessedTimestamp: Int64 = 0
-    var fpsInterval: Int64 = 1000000000 / 24 // 24 fps to ensure VNGen can proccess
+    var lastFrameTimestamp: Int64 = 0
+    let targetFrameDurationNs: Int64 = Int64(1_000_000_000 / 24) // 24fps
     
     var videoSource: RTCVideoSource?
     var virtualBackground: RTCVirtualBackground?
@@ -99,6 +97,15 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     }
     
     func didReceive(_ pixelBuffer: CVPixelBuffer!, width: Int32, height: Int32, timestamp: Int64) {
+        let timestampNew = Int64( DispatchTime.now().uptimeNanoseconds)
+        let frameDuration = timestampNew - lastFrameTimestamp
+        
+        if frameDuration < targetFrameDurationNs {
+            return
+        }
+
+        lastFrameTimestamp = timestampNew
+        
         if backgroundImage == nil {
             let timestampNs = DispatchTime.now().uptimeNanoseconds
             
@@ -118,10 +125,10 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
             if let error = error {
                 // Handle error
                 print("Error processing foreground mask: \(error.localizedDescription)")
-            } else if bufferProcessed != nil {
+            } else if let bufferProcessed = bufferProcessed {
                 let timestampNs = DispatchTime.now().uptimeNanoseconds
                 
-                guard let frame: RTCVideoFrame = bufferProcessed!.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
+                guard let frame: RTCVideoFrame = bufferProcessed.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
                     return
                 }
                 
@@ -260,12 +267,12 @@ extension CIImage {
     //         print("Failed to create CGImage from CIImage")
     //         return false
     //     }
-        
+    
     //     guard let data = UIImage(cgImage: cgImage).jpegData(compressionQuality: 1.0) else {
     //         print("Failed to convert CGImage to JPEG data")
     //         return false
     //     }
-        
+    
     //     do {
     //         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     //         let fileURL = documentsURL.appendingPathComponent(fileName)
