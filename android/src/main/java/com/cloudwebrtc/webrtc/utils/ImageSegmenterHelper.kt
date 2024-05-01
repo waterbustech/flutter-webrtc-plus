@@ -35,7 +35,7 @@ import java.nio.FloatBuffer
 
 class ImageSegmenterHelper(
     var currentDelegate: Int = DELEGATE_GPU,
-    var runningMode: RunningMode = RunningMode.IMAGE,
+    var runningMode: RunningMode = RunningMode.LIVE_STREAM,
     var currentModel: Int = MODEL_SELFIE_SEGMENTER,
     val context: Context,
     var imageSegmenterListener: SegmenterListener? = null
