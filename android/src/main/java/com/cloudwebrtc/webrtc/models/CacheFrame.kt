@@ -5,5 +5,4 @@ import org.webrtc.VideoFrame
 
 data class CacheFrame(
     val originalBitmap: Bitmap,
-    val originalFrame: VideoFrame,
 )
