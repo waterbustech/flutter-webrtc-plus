@@ -17,6 +17,16 @@ A new flutter plugin project.
   s.dependency 'FlutterMacOS'
   s.dependency 'KaiRTC', '124.6367.01'
   s.osx.deployment_target = '11.0'
+
+  s.prepare_command = <<-CMD
+    curl -L -o frameworks.zip https://github.com/webrtcsdk/gpupixel-macos/archive/refs/tags/1.2.5.zip
+    unzip frameworks.zip
+    mv gpupixel-macos-1.2.5/gpupixel.framework .
+    mv gpupixel-macos-1.2.5/vnn_core_osx.framework .
+    mv gpupixel-macos-1.2.5/vnn_face_osx.framework .
+    mv gpupixel-macos-1.2.5/vnn_kit_osx.framework .
+  CMD
+
   s.preserve_paths = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
   s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
   s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel', 'vnn_core_osx', 'vnn_face_osx', 'vnn_kit_osx'

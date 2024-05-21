@@ -17,6 +17,16 @@ A new flutter plugin project.
   s.dependency 'Flutter'
   s.dependency 'KaiRTC', '124.6367.01'
   s.ios.deployment_target = '12.0'
+
+  s.prepare_command = <<-CMD
+    curl -L -o frameworks.zip https://github.com/webrtcsdk/gpupixel-ios/archive/refs/tags/1.2.5.zip
+    unzip frameworks.zip
+    mv gpupixel-ios-1.2.5/gpupixel.framework .
+    mv gpupixel-ios-1.2.5/vnn_core_ios.framework .
+    mv gpupixel-ios-1.2.5/vnn_face_ios.framework .
+    mv gpupixel-ios-1.2.5/vnn_kit_ios.framework .
+  CMD
+
   s.preserve_paths = 'gpupixel.framework', 'vnn_core_ios.framework', 'vnn_face_ios.framework', 'vnn_kit_ios.framework'
   s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_ios.framework', 'vnn_face_ios.framework', 'vnn_kit_ios.framework'
   s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel', 'vnn_core_ios', 'vnn_face_ios', 'vnn_kit_ios'
