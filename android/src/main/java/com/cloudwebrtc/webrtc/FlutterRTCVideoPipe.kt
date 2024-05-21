@@ -178,7 +178,7 @@ class FlutterRTCVideoPipe {
                         // Otherwise, perform segmentation on the captured frame and replace the background
                         val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
                         if (inputFrameBitmap != null) {
-                            beautyFilters.processVideoFrame(inputFrameBitmap, frame.rotation)
+                            beautyFilters.processBitmap(inputFrameBitmap)
                         } else {
                             Log.d(tag, "Convert video frame to bitmap failure")
                         }
@@ -200,7 +200,7 @@ class FlutterRTCVideoPipe {
      * @param videoFrame The input VideoFrame to be converted.
      * @return The corresponding Bitmap representation of the VideoFrame.
      */
-    private fun videoFrameToBitmap(videoFrame: VideoFrame): Bitmap? {
+    private fun videoFrameToBitmap(videoFrame: VideoFrame): Bitmap {
         // Retain the VideoFrame to prevent it from being garbage collected
         videoFrame.retain()
 
@@ -217,6 +217,7 @@ class FlutterRTCVideoPipe {
             i420Buffer.strideU,
             i420Buffer.strideV
         )
+
         // Convert I420 format to NV12 format as required by YuvImage
         val chromaWidth = (width + 1) / 2
         val chromaHeight = (height + 1) / 2
@@ -246,7 +247,7 @@ class FlutterRTCVideoPipe {
         i420Buffer.release()
         videoFrame.release()
 
-        // Convert YuvImage to byte array
+//        // Convert YuvImage to byte array
         val outputStream = ByteArrayOutputStream()
         yuvImage.compressToJpeg(
             Rect(0, 0, yuvImage.width, yuvImage.height),
