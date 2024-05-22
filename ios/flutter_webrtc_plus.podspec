@@ -19,6 +19,25 @@ A new flutter plugin project.
   s.ios.deployment_target = '12.0'
 
   s.prepare_command = <<-CMD
+    if [ -f "frameworks.zip" ]; then
+      rm frameworks.zip
+    fi
+    if [ -d "gpupixel-ios-1.2.5" ]; then
+      rm -rf gpupixel-ios-1.2.5
+    fi
+    if [ -d "gpupixel.framework" ]; then
+      rm -rf gpupixel.framework
+    fi
+    if [ -d "vnn_core_ios.framework" ]; then
+      rm -rf vnn_core_ios.framework
+    fi
+    if [ -d "vnn_face_ios.framework" ]; then
+      rm -rf vnn_face_ios.framework
+    fi
+    if [ -d "vnn_kit_ios.framework" ]; then
+      rm -rf vnn_kit_ios.framework
+    fi
+    
     curl -L -o frameworks.zip https://github.com/webrtcsdk/gpupixel-ios/archive/refs/tags/1.2.5.zip
     unzip frameworks.zip
     mv gpupixel-ios-1.2.5/gpupixel.framework .

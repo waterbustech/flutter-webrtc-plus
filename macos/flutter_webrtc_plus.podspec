@@ -19,6 +19,25 @@ A new flutter plugin project.
   s.osx.deployment_target = '11.0'
 
   s.prepare_command = <<-CMD
+    if [ -f "frameworks.zip" ]; then
+      rm frameworks.zip
+    fi
+    if [ -d "gpupixel-macos-1.2.5" ]; then
+      rm -rf gpupixel-macos-1.2.5
+    fi
+    if [ -d "gpupixel.framework" ]; then
+      rm -rf gpupixel.framework
+    fi
+    if [ -d "vnn_core_osx.framework" ]; then
+      rm -rf vnn_core_osx.framework
+    fi
+    if [ -d "vnn_face_osx.framework" ]; then
+      rm -rf vnn_face_osx.framework
+    fi
+    if [ -d "vnn_kit_osx.framework" ]; then
+      rm -rf vnn_kit_osx.framework
+    fi
+    
     curl -L -o frameworks.zip https://github.com/webrtcsdk/gpupixel-macos/archive/refs/tags/1.2.5.zip
     unzip frameworks.zip
     mv gpupixel-macos-1.2.5/gpupixel.framework .

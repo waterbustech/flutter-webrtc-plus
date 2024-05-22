@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.10.3+6] - 2024-05-22
+
+* [iOS/macOS] Fix pod install.
+  
 [0.10.3+5] - 2024-05-21
 
 * [iOS/macOS] Host GPUPixel frameworks on Github.
