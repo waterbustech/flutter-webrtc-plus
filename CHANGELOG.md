@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.10.3+7] - 2024-05-29
+
+* [Android] Add gpupixel support for Android
+
 [0.10.3+6] - 2024-05-22
 
 * [iOS/macOS] Fix pod install.
