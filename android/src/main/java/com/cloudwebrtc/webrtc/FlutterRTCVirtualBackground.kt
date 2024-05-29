@@ -123,13 +123,12 @@ class FlutterRTCVirtualBackground {
     fun drawSegmentedBackground(
         segmentedBitmap: Bitmap?,
         backgroundBitmap: Bitmap?,
-        rotationAngle: Int?
     ): Bitmap? {
         if (segmentedBitmap == null || backgroundBitmap == null) {
             return null
         }
 
-        val isHorizontalFrame = rotationAngle == 0 || rotationAngle == 180
+        val isHorizontalFrame = false
 
         val outputBitmap = Bitmap.createBitmap(
             segmentedBitmap.width,
@@ -142,7 +141,7 @@ class FlutterRTCVirtualBackground {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
         val matrix = Matrix()
-        matrix.postRotate((rotationAngle?.toFloat() ?: 0f) - 180)
+//        matrix.postRotate((rotationAngle?.toFloat() ?: 0f) - 180)
 
         if (isHorizontalFrame) {
             val scaleFitContain = Math.min(
