@@ -202,40 +202,41 @@ class Helper {
   // MARK: Adjust beauty value
 
   static Future<void> setThinFaceValue(double value) async {
-    if (!platformIsDarwin) return;
+    if (!platformSupportGPUPixel) return;
 
     WebRTC.invokeMethod("setThinValue", {"value": value});
   }
 
   static Future<void> setBigEyeValue(double value) async {
-    if (!platformIsDarwin) return;
+    if (!platformSupportGPUPixel) return;
 
     WebRTC.invokeMethod("setBigEyeValue", {"value": value});
   }
 
   static Future<void> setSmoothValue(double value) async {
-    if (!platformIsDarwin) return;
+    if (!platformSupportGPUPixel) return;
 
     WebRTC.invokeMethod("setSmoothValue", {"value": value});
   }
 
   static Future<void> setLipstickValue(double value) async {
-    if (!platformIsDarwin) return;
+    if (!platformSupportGPUPixel) return;
 
     WebRTC.invokeMethod("setLipstickValue", {"value": value});
   }
 
   static Future<void> setBlusherValue(double value) async {
-    if (!platformIsDarwin) return;
+    if (!platformSupportGPUPixel) return;
 
     WebRTC.invokeMethod("setBlusherValue", {"value": value});
   }
 
   static Future<void> setWhiteValue(double value) async {
-    if (!platformIsDarwin) return;
+    if (!platformSupportGPUPixel) return;
 
     WebRTC.invokeMethod("setWhiteValue", {"value": value});
   }
 
+  static bool get platformSupportGPUPixel => Platform.isIOS || Platform.isMacOS || Platform.isAndroid;
   static bool get platformIsDarwin => Platform.isIOS || Platform.isMacOS;
 }

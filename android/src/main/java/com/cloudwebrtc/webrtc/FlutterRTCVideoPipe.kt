@@ -37,13 +37,12 @@ import java.nio.ByteBuffer
 import java.util.Arrays
 import java.util.concurrent.Executors
 
-class FlutterRTCVideoPipe {
+class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
     var isGpuSupported = false
     private val tag: String = "[FlutterRTC-VideoPipe]"
     private var videoSource: VideoSource? = null
     private var textureHelper: SurfaceTextureHelper? = null
     private var backgroundBitmap: Bitmap? = null
-    private var photoEffect: StyleEffect = StyleEffect.NORMAL
     private var expectConfidence = 0.7
     private var imageSegmentationHelper: ImageSegmenterHelper? = null
     private var sink: VideoSink? = null
@@ -51,7 +50,6 @@ class FlutterRTCVideoPipe {
     private var lastProcessedFrameTime: Long = 0
     private val targetFrameInterval: Long = 1000 / 24 // 1000 milliseconds divided by 24 FPS
     private val virtualBackground: FlutterRTCVirtualBackground = FlutterRTCVirtualBackground()
-    private val beautyFilters: FlutterRTCBeautyFilters = FlutterRTCBeautyFilters()
 
     fun initialize(context: Context, videoSource: VideoSource) {
         this.videoSource = videoSource
@@ -81,7 +79,7 @@ class FlutterRTCVideoPipe {
             }
         }
 
-        this.beautyFilters.initialize(beautyFiltersCallBack, context)
+        beautyFilters.initialize(beautyFiltersCallBack, context)
 
         this.imageSegmentationHelper = ImageSegmenterHelper(
             context = context,
@@ -145,10 +143,6 @@ class FlutterRTCVideoPipe {
     fun configurationVirtualBackground(bgBitmap: Bitmap, confidence: Double) {
         backgroundBitmap = bgBitmap
         expectConfidence = confidence
-    }
-
-    fun setBeautyFilter(effect: StyleEffect) {
-        photoEffect = effect
     }
 
     private fun processFrame() {

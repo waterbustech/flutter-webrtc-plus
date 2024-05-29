@@ -81,7 +81,7 @@ apply from: 'download_models.gradle'
 dependencies {
     implementation 'tech.waterbus:webrtc:124.6367.01'
     implementation 'com.github.davidliu:audioswitch:89582c47c9a04c62f90aa5e57251af4800a62c9a'
-    implementation 'androidx.annotation:annotation:1.7.1'
+    implementation 'androidx.annotation:annotation:1.8.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.21"
@@ -93,5 +93,5 @@ dependencies {
     implementation 'com.google.android.gms:play-services-tflite-gpu:16.2.0'
 
     // Beauty Filters
-    implementation files("libs/gpupixel-release.aar")
+    implementation 'tech.waterbus:gpupixel:1.0.1'
 }

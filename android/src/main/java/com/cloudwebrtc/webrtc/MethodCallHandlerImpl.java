@@ -110,6 +110,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
 
   private FlutterRTCVideoPipe videoPipe;
 
+  private FlutterRTCBeautyFilters beautyFilters;
+
   private AudioDeviceModule audioDeviceModule;
 
   private FlutterRTCFrameCryptor frameCryptor;
@@ -159,7 +161,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
                     .setFieldTrials("WebRTC-Fec-03-Advertised/Enabled/") // Enable FEC
                     .createInitializationOptions());
 
-    videoPipe = new FlutterRTCVideoPipe();
+    beautyFilters = new FlutterRTCBeautyFilters();
+    videoPipe = new FlutterRTCVideoPipe(beautyFilters);
     getUserMediaImpl = new GetUserMediaImpl(this, context, videoPipe);
     frameCryptor = new FlutterRTCFrameCryptor(this);
 
@@ -319,13 +322,44 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         result.success(true);
         break;
       }
-      case "applyFilter":{
-        videoPipe.setBeautyFilter(StyleEffect.CLASSIC);
+      case "disableVirtualBackground": {
+        videoPipe.resetBackground();
         result.success(true);
         break;
       }
-      case "disableVirtualBackground": {
-        videoPipe.resetBackground();
+      case "setThinValue":{
+        double value = call.argument("value");
+        Log.d("OpenGL", "value: " + value);
+        beautyFilters.setThinValue(Double.valueOf(value).floatValue());
+        result.success(true);
+        break;
+      }
+      case "setBigEyeValue":{
+        double value = call.argument("value");
+        beautyFilters.setBigEyesValue(Double.valueOf(value).floatValue());
+        result.success(true);
+        break;
+      }
+      case "setSmoothValue":{
+        double value = call.argument("value");
+        beautyFilters.setBeautyValue(Double.valueOf(value).floatValue());
+        result.success(true);
+        break;
+      }
+      case "setLipstickValue":{
+        double value = call.argument("value");
+        beautyFilters.setLipstickValue(Double.valueOf(value).floatValue());
+        result.success(true);
+        break;
+      }
+      case "setWhiteValue":{
+        double value = call.argument("value");
+        beautyFilters.setWhiteValue(Double.valueOf(value).floatValue());
+        result.success(true);
+        break;
+      }
+      case "setBlusherValue":{
+        float value = call.argument("value");
         result.success(true);
         break;
       }
