@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[0.10.3+8] - 2024-05-29
+
+* [iOS/macOS] Remove redundant print
+* [Actions] Set flutter version for build.yml
+
 [0.10.3+7] - 2024-05-29
 
 * [Android] Add gpupixel support for Android

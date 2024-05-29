@@ -32,11 +32,6 @@ import WebRTC
             return
         }
         
-        print("======PixelBuffer Before========")
-        print(pixelBuffer.getPixelFormatName())
-        print(CVPixelBufferGetWidth(pixelBuffer))
-        print(CVPixelBufferGetHeight(pixelBuffer))
-        
         self.beautyFilter?.processVideoFrame(pixelBuffer)
     }
     
@@ -102,11 +97,6 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     }
     
     func didReceive(_ pixelBuffer: CVPixelBuffer!, width: Int32, height: Int32, timestamp: Int64) {
-        print("======PixelBuffer After========")
-        print(pixelBuffer.getPixelFormatName())
-        print(CVPixelBufferGetWidth(pixelBuffer))
-        print(CVPixelBufferGetHeight(pixelBuffer))
-        
         let timestampNew = Int64( DispatchTime.now().uptimeNanoseconds)
         let frameDuration = timestampNew - lastFrameTimestamp
         

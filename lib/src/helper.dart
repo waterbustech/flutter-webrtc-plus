@@ -237,6 +237,7 @@ class Helper {
     WebRTC.invokeMethod("setWhiteValue", {"value": value});
   }
 
-  static bool get platformSupportGPUPixel => Platform.isIOS || Platform.isMacOS || Platform.isAndroid;
+  static bool get platformSupportGPUPixel =>
+      Platform.isIOS || Platform.isMacOS || Platform.isAndroid;
   static bool get platformIsDarwin => Platform.isIOS || Platform.isMacOS;
 }
