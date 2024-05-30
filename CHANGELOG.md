@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.10.3+9] - 2024-05-30
+
+* [Actions] Upgrade gpupixel to 1.0.2
+
 [0.10.3+8] - 2024-05-29
 
 * [iOS/macOS] Remove redundant print
