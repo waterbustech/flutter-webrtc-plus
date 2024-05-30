@@ -185,9 +185,6 @@ using namespace gpupixel;
     auto height = CVPixelBufferGetHeight(imageBuffer);
     auto stride = CVPixelBufferGetBytesPerRow(imageBuffer)/4;
     auto pixels = (const uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
-    
-    NSLog(@"value: %@", getPixelFormatName(imageBuffer));
-    
     gpuPixelRawInput->uploadBytes(pixels, width, height, stride);
     CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
 }
