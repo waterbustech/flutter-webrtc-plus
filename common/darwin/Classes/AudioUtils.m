@@ -13,8 +13,9 @@
   if (recording) {
     config.category = AVAudioSessionCategoryPlayAndRecord;
     config.categoryOptions =
-        AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP;
-    config.mode = AVAudioSessionModeVoiceChat;
+        AVAudioSessionCategoryOptionAllowBluetooth |
+        AVAudioSessionCategoryOptionAllowBluetoothA2DP |
+        AVAudioSessionCategoryOptionAllowAirPlay;
 
     [session lockForConfiguration];
     NSError* error = nil;

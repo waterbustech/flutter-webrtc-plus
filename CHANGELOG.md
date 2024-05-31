@@ -1,6 +1,30 @@
 # Changelog
 
 --------------------------------------------
+[0.10.7+1] - 2024-05-31
+
+* [iOS] fix: platformView with fit cover works wrong
+
+[0.10.7] - 2024-05-30
+
+* [iOS] feat: add PlatformView Renderer for iOS. (#1569)
+* [iOS] fix: audio session control for iOS. (#1590)
+
+[0.10.6] - 2024-05-13
+
+* [Web] Some important fixes for web.
+
+[0.10.5] - 2024-05-13
+
+* [Android] fix: make MediaDeviceInfo (Audio deviceId, label, groupId) consistent. (#1583)
+
+[0.10.4] - 2024-05-06
+
+* [iOS/macOS] chore: update swift webrtc sdks to 114.5735.10 (#1576)
+* [Android] fix: actually call selectAudioOutput in enableSpeakerButPreferBluetooth
+* [iOS] fix: remember speakerphone mode for ensureAudioSession (#1568)
+* [Windows/Linux] Fix handling of unimplemented method (#1563)
+
 [0.10.3+9] - 2024-05-30
 
 * [Actions] Upgrade gpupixel to 1.0.2
@@ -21,7 +45,7 @@
 [0.10.3+5] - 2024-05-21
 
 * [iOS/macOS] Host GPUPixel frameworks on Github.
-  
+
 [0.10.3] - 2024-04-09
 
 * [iOS/macOS] Fix compilation warning for iOS/macOS.

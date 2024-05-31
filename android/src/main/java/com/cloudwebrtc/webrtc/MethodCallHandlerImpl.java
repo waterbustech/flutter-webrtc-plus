@@ -667,7 +667,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       case "selectAudioInput":
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
           String deviceId = call.argument("deviceId");
-          getUserMediaImpl.setPreferredInputDevice(Integer.parseInt(deviceId));
+          getUserMediaImpl.setPreferredInputDevice(deviceId);
           result.success(null);
         } else {
           result.notImplemented();
@@ -892,7 +892,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       case "setPreferredInputDevice": {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
           String deviceId = call.argument("deviceId");
-          getUserMediaImpl.setPreferredInputDevice(Integer.parseInt(deviceId));
+          getUserMediaImpl.setPreferredInputDevice(deviceId);
           result.success(null);
         } else {
           result.notImplemented();
@@ -1487,8 +1487,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       ConstraintsMap audio = new ConstraintsMap();
       audio.putString("label", "Audio");
       audio.putString("deviceId", "audio-1");
-      audio.putString("facing", "");
       audio.putString("kind", "audioinput");
+      audio.putString("groupId", "microphone");
       array.pushMap(audio);
     } else {
       android.media.AudioManager audioManager = ((android.media.AudioManager) context
@@ -1498,27 +1498,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
         AudioDeviceInfo device = devices[i];
         if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_MIC || device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                 device.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET) {
-          int type = (device.getType() & 0xFF);
-          String label = device.getProductName().toString();
-          String address = Build.VERSION.SDK_INT < Build.VERSION_CODES.P ? String.valueOf(i) : device.getAddress();
-
-          if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_MIC) {
-              label = "Built-in Microphone (" + address +  ")";
-          }
-
-          if(device.getType() == AudioDeviceInfo.TYPE_WIRED_HEADSET) {
-            label = "Wired Headset";
-          }
-
-          if(device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
-            label = "Bluetooth SCO (" + device.getProductName().toString() +  ")";
-          }
-
           ConstraintsMap audio = new ConstraintsMap();
-          audio.putString("label", label);
-          audio.putString("deviceId", String.valueOf(i));
-          audio.putString("groupId", "" + type);
-          audio.putString("facing", "");
+          audio.putString("label", AudioUtils.getAudioDeviceLabel(device));
+          audio.putString("deviceId", AudioUtils.getAudioDeviceId(device));
+          audio.putString("groupId", AudioUtils.getAudioGroupId(device));
           audio.putString("kind", "audioinput");
           array.pushMap(audio);
         }
@@ -1531,7 +1514,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       ConstraintsMap audioOutputMap = new ConstraintsMap();
       audioOutputMap.putString("label", audioOutput.getName());
       audioOutputMap.putString("deviceId", AudioDeviceKind.fromAudioDevice(audioOutput).typeName);
-      audioOutputMap.putString("facing", "");
+      audioOutputMap.putString("groupId", "" + AudioDeviceKind.fromAudioDevice(audioOutput).typeName);
       audioOutputMap.putString("kind", "audiooutput");
       array.pushMap(audioOutputMap);
     }
@@ -1679,6 +1662,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     params.putString("deviceId", "" + index);
     params.putString("facing", facing);
     params.putString("kind", "videoinput");
+    params.putString("groupId", "camera");
     return params;
   }
 
