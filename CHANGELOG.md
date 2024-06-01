@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[0.10.7+2] - 2024-05-31
+
+* [Linux] fix: compile error
+* [Android] style: set 90% alpha when draw segmented image
+
 [0.10.7+1] - 2024-05-31
 
 * [iOS] fix: platformView with fit cover works wrong
