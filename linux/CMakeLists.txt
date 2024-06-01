@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-set(PROJECT_NAME "flutter_webrtc")
+set(PROJECT_NAME "flutter_webrtc_plus")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 set(PLUGIN_NAME "${PROJECT_NAME}_plugin")
