@@ -87,7 +87,7 @@ class FlutterRTCVirtualBackground {
                 val originalPixel = originalBitmap.getPixel(x, y)
 
                 colors[i] = Color.argb(
-                    Color.alpha(originalPixel),
+                    225, // blur ~10%
                     Color.red(originalPixel),
                     Color.green(originalPixel),
                     Color.blue(originalPixel)
