@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import '../utils.dart';
 
 enum AppleAudioMode {
@@ -15,12 +13,12 @@ enum AppleAudioMode {
 }
 
 extension AppleAudioModeExt on AppleAudioMode {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AppleAudioModeEnumEx on String {
   AppleAudioMode toAppleAudioMode() =>
-      AppleAudioMode.values.firstWhere((d) => describeEnum(d) == toLowerCase());
+      AppleAudioMode.values.firstWhere((d) => d.name == toLowerCase());
 }
 
 enum AppleAudioCategory {
@@ -32,12 +30,12 @@ enum AppleAudioCategory {
 }
 
 extension AppleAudioCategoryExt on AppleAudioCategory {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AppleAudioCategoryEnumEx on String {
-  AppleAudioCategory toAppleAudioCategory() => AppleAudioCategory.values
-      .firstWhere((d) => describeEnum(d) == toLowerCase());
+  AppleAudioCategory toAppleAudioCategory() =>
+      AppleAudioCategory.values.firstWhere((d) => d.name == toLowerCase());
 }
 
 enum AppleAudioCategoryOption {
@@ -51,13 +49,13 @@ enum AppleAudioCategoryOption {
 }
 
 extension AppleAudioCategoryOptionExt on AppleAudioCategoryOption {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AppleAudioCategoryOptionEnumEx on String {
   AppleAudioCategoryOption toAppleAudioCategoryOption() =>
       AppleAudioCategoryOption.values
-          .firstWhere((d) => describeEnum(d) == toLowerCase());
+          .firstWhere((d) => d.name == toLowerCase());
 }
 
 class AppleAudioConfiguration {

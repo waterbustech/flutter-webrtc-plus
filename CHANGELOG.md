@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.10.7+4] - 2024-06-04
+
+* [Dart] Improve pub points
+
 [0.10.7+3] - 2024-06-04
 
 * [WebRTC] Upgrade WebRTC M125

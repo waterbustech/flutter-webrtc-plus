@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import '../utils.dart';
 
 enum AndroidAudioMode {
@@ -11,12 +9,12 @@ enum AndroidAudioMode {
 }
 
 extension AndroidAudioModeExt on AndroidAudioMode {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AndroidAudioModeEnumEx on String {
-  AndroidAudioMode toAndroidAudioMode() => AndroidAudioMode.values
-      .firstWhere((d) => describeEnum(d) == toLowerCase());
+  AndroidAudioMode toAndroidAudioMode() =>
+      AndroidAudioMode.values.firstWhere((d) => d.name == toLowerCase());
 }
 
 enum AndroidAudioFocusMode {
@@ -27,13 +25,12 @@ enum AndroidAudioFocusMode {
 }
 
 extension AndroidAudioFocusModeExt on AndroidAudioFocusMode {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AndroidAudioFocusModeEnumEx on String {
   AndroidAudioFocusMode toAndroidAudioFocusMode() =>
-      AndroidAudioFocusMode.values
-          .firstWhere((d) => describeEnum(d) == toLowerCase());
+      AndroidAudioFocusMode.values.firstWhere((d) => d.name == toLowerCase());
 }
 
 enum AndroidAudioStreamType {
@@ -48,13 +45,12 @@ enum AndroidAudioStreamType {
 }
 
 extension AndroidAudioStreamTypeExt on AndroidAudioStreamType {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AndroidAudioStreamTypeEnumEx on String {
   AndroidAudioStreamType toAndroidAudioStreamType() =>
-      AndroidAudioStreamType.values
-          .firstWhere((d) => describeEnum(d) == toLowerCase());
+      AndroidAudioStreamType.values.firstWhere((d) => d.name == toLowerCase());
 }
 
 enum AndroidAudioAttributesUsageType {
@@ -75,13 +71,13 @@ enum AndroidAudioAttributesUsageType {
 
 extension AndroidAudioAttributesUsageTypeExt
     on AndroidAudioAttributesUsageType {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AndroidAudioAttributesUsageTypeEnumEx on String {
   AndroidAudioAttributesUsageType toAndroidAudioAttributesUsageType() =>
       AndroidAudioAttributesUsageType.values
-          .firstWhere((d) => describeEnum(d) == toLowerCase());
+          .firstWhere((d) => d.name == toLowerCase());
 }
 
 enum AndroidAudioAttributesContentType {
@@ -94,13 +90,13 @@ enum AndroidAudioAttributesContentType {
 
 extension AndroidAudioAttributesContentTypeExt
     on AndroidAudioAttributesContentType {
-  String get value => describeEnum(this);
+  String get value => name;
 }
 
 extension AndroidAudioAttributesContentTypeEnumEx on String {
   AndroidAudioAttributesContentType toAndroidAudioAttributesContentType() =>
       AndroidAudioAttributesContentType.values
-          .firstWhere((d) => describeEnum(d) == toLowerCase());
+          .firstWhere((d) => d.name == toLowerCase());
 }
 
 class AndroidAudioConfiguration {
