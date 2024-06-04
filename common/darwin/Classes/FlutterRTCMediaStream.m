@@ -927,16 +927,19 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
 }
 
 - (AVCaptureDevice*)findDeviceForPosition:(AVCaptureDevicePosition)position {
-    if (position == AVCaptureDevicePositionUnspecified) {
-        return [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+  if (position == AVCaptureDevicePositionUnspecified) {
+    return [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+  }
+  NSArray<AVCaptureDevice*>* captureDevices = [RTCCameraVideoCapturer captureDevices];
+  for (AVCaptureDevice* device in captureDevices) {
+    if (device.position == position) {
+      return device;
     }
-    NSArray<AVCaptureDevice*>* captureDevices = [RTCCameraVideoCapturer captureDevices];
-    for (AVCaptureDevice* device in captureDevices) {
-        if (device.position == position) {
-            return device;
-        }
-    }
+  }
+  if(captureDevices.count > 0) {
     return captureDevices[0];
+  }
+  return nil;
 }
 
 - (AVCaptureDeviceFormat*)selectFormatForDevice:(AVCaptureDevice*)device
