@@ -122,9 +122,7 @@ static NSString *sharedPeerConnectionId;
 @synthesize messenger = _messenger;
 @synthesize eventSink = _eventSink;
 @synthesize preferredInput = _preferredInput;
-#if TARGET_OS_IPHONE
-@synthesize backgroundImage = _backgroundImage;
-#endif
+
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   FlutterMethodChannel* channel =
       [FlutterMethodChannel methodChannelWithName:@"FlutterWebRTC.Method"
@@ -957,16 +955,14 @@ static NSString *sharedPeerConnectionId;
       if ([imageData isKindOfClass:[FlutterStandardTypedData class]]) {
           CIImage *image = [CIImage imageWithData:imageData.data];
           if (image) {
-              _backgroundImage = image;
               result(nil);
-              [self setBackgroundImage:_backgroundImage];
+              [self setBackgroundImage:image];
           }
       }
 
   } else if([@"disableVirtualBackground" isEqualToString:call.method])  {
-      _backgroundImage = nil;
       result(nil);
-      [self setBackgroundImage:_backgroundImage];
+      [self setBackgroundImage:nil];
   }else if([@"setThinValue" isEqualToString:call.method]) {
       NSDictionary *arguments = call.arguments;
       NSNumber *numberValue = arguments[@"value"];

@@ -23,15 +23,28 @@ using namespace gpupixel;
 
 @implementation RTCBeautyFilter
 
-@synthesize delegate = _delegate;
-
 - (instancetype)initWithDelegate:(id<RTCBeautyFilterDelegate>)delegate {
     self = [super init];
     if (self) {
-        self.delegate = delegate;
+        _delegate = delegate;
         [self setup];
     }
     return self;
+}
+
+- (void)releaseInstance {
+    NSLog(@"RTCBeautyFilter deallocated");
+    
+    // Clean up resources
+    gpuPixelRawInput.reset();
+    beauty_face_filter_.reset();
+    targetRawOutput_.reset();
+    face_reshape_filter_.reset();
+    lipstick_filter_.reset();
+    blusher_filter_.reset();
+    
+    // Release delegate
+    _delegate = nil;
 }
 
 - (void)setup {
@@ -66,7 +79,7 @@ using namespace gpupixel;
             
             size_t stride = width * 4;
             
-        #if TARGET_OS_IOS || TARGET_OS_SIMULATOR
+#if TARGET_OS_IOS || TARGET_OS_SIMULATOR
             // iOS: Use original data directly for BGRA format
             // Create pixel buffer attributes
             NSDictionary *options = @{
@@ -86,7 +99,7 @@ using namespace gpupixel;
                                                            (__bridge CFDictionaryRef)options,
                                                            &pixelBuffer);
             
-        #else
+#else
             // macOS: Convert ABGR or BGRA to ARGB
             // Create a new buffer to store ARGB pixel data
             uint8_t* argbData = (uint8_t*)malloc(stride * height);
@@ -122,7 +135,7 @@ using namespace gpupixel;
                                                            &pixelBuffer);
             
             free(argbData);  // Free the memory allocated for ARGB data
-        #endif
+#endif
             
             if (result != kCVReturnSuccess) {
                 NSLog(@"Error: Unable to create CVPixelBuffer");

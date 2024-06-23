@@ -52,8 +52,6 @@ typedef void (^CapturerStopHandler)(CompletionHandler _Nonnull handler);
 @property(nonatomic) NSInteger _lastTargetHeight;
 @property(nonatomic) NSInteger _lastTargetFps;
 
-@property (nonatomic, strong, nullable) CIImage *backgroundImage;
-
 - (RTCMediaStream*)streamForId:(NSString*)streamId peerConnectionId:(NSString*)peerConnectionId;
 - (RTCRtpTransceiver*)getRtpTransceiverById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id;
 - (NSDictionary*)mediaStreamToMap:(RTCMediaStream*)stream ownerTag:(NSString*)ownerTag;

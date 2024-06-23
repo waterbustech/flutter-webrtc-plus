@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.10.7+5] - 2024-06-23
+
+* [Android/Darwin] Fix memory leaks - release BeautyFilters,.. after use
+
 [0.10.7+4] - 2024-06-04
 
 * [Dart] Improve pub points

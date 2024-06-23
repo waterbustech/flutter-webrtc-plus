@@ -27,6 +27,12 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
         }
     }
     
+    deinit {
+        if #available(iOS 17.0, macOS 14.0, *) {
+            maskRequest = nil
+        }
+    }
+    
     public func processForegroundMask(from pixelBuffer: CVPixelBuffer, backgroundImage: CIImage, completion: @escaping ForegroundMaskCompletion) {
         DispatchQueue.global(qos: .userInitiated).async {
             if #available(iOS 17.0, macOS 14.0, *) {

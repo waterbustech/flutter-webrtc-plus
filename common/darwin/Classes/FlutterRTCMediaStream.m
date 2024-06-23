@@ -494,6 +494,7 @@ typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
         __weak RTCCameraVideoCapturer* capturer = self.videoCapturer;
         self.videoCapturerStopHandlers[videoTrack.trackId] = ^(CompletionHandler handler) {
             NSLog(@"Stop video capturer, trackID %@", videoTrack.trackId);
+            videoPipe = nil;
             [capturer stopCaptureWithCompletionHandler:handler];
         };
         

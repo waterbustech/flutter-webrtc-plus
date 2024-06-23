@@ -17,7 +17,7 @@
 
 @interface RTCBeautyFilter : NSObject
 
-@property(nonatomic, weak) id<RTCBeautyFilterDelegate> delegate;
+@property (nonatomic, weak) id<RTCBeautyFilterDelegate> delegate;
 @property (nonatomic, assign) CGFloat beautyValue;
 @property (nonatomic, assign) CGFloat whithValue;
 @property (nonatomic, assign) CGFloat saturationValue;
@@ -27,6 +27,7 @@
 @property (nonatomic, assign) CGFloat blusherValue;
 
 - (instancetype)initWithDelegate:(id<RTCBeautyFilterDelegate>)delegate;
+- (void)releaseInstance;
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer;
 
 @end

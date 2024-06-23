@@ -14,36 +14,25 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 
-class FlutterRTCBeautyFilters {
+class FlutterRTCBeautyFilters(context: Context) {
     private val tag = "FlutterRTCBeautyFilters"
-
-    private var context: Context? = null
     private var sourceRawInput: GPUPixelSourceCamera? = null
     private var beautyFaceFilter: BeautyFaceFilter? = null
     private var faceReshapeFilter: FaceReshapeFilter? = null
     private var lipstickFilter: LipstickFilter? = null
     private var resultCallback: ProcessedFrameDataCallback? = null
 
-    fun initialize(callback: ProcessedFrameDataCallback, context: Context) {
+    init {
         try {
-            this.context = context
-            this.resultCallback = callback
-
             beautyFaceFilter = BeautyFaceFilter()
             faceReshapeFilter = FaceReshapeFilter()
             lipstickFilter = LipstickFilter()
             sourceRawInput = GPUPixelSourceCamera(context)
 
             GPUPixel.getInstance().runOnDraw {
-                val callbck = GPUPixel.RawOutputCallback { bytes, width, height, ts ->
-                    val bmp = convertPixelsToBitmap(bytes, width, height)
-                    resultCallback?.onResult(bmp)
-                }
-
                 sourceRawInput!!.addTarget(lipstickFilter)
                 lipstickFilter!!.addTarget(faceReshapeFilter)
                 faceReshapeFilter!!.addTarget(beautyFaceFilter)
-                beautyFaceFilter!!.addTargetCallback(callbck)
 
                 sourceRawInput?.setLandmarkCallbck(GPUPixel.GPUPixelLandmarkCallback {
                     faceReshapeFilter?.faceLandmark = it
@@ -53,6 +42,17 @@ class FlutterRTCBeautyFilters {
         } catch (error: Exception) {
             Log.e(tag, error.message.toString())
         }
+    }
+
+    fun setCallback(callback: ProcessedFrameDataCallback) {
+        this.resultCallback = callback
+
+        val cbResult = GPUPixel.RawOutputCallback { bytes, width, height, ts ->
+            val bmp = convertPixelsToBitmap(bytes, width, height)
+            resultCallback?.onResult(bmp)
+        }
+
+        beautyFaceFilter!!.addTargetCallback(cbResult)
     }
 
     private fun convertPixelsToBitmap(pixels: ByteArray, width: Int, height: Int): Bitmap {

@@ -13,10 +13,16 @@ import WebRTC
     var beautyFilterDelegate: BeautyFilterDelegate?
     
     @objc public init(videoSource: RTCVideoSource) {
-        self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource)
-        self.beautyFilter = RTCBeautyFilter.init(delegate: self.beautyFilterDelegate)
-        
         super.init()
+        
+        self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource)
+        self.beautyFilter = RTCBeautyFilter(delegate: self.beautyFilterDelegate)
+    }
+    
+    deinit {
+        self.beautyFilter?.releaseInstance()
+        self.beautyFilter = nil
+        self.beautyFilterDelegate = nil
     }
     
     @objc public func setBackgroundImage(image: CIImage?) {
@@ -89,11 +95,19 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     var virtualBackground: RTCVirtualBackground?
     var backgroundImage: CIImage?
     var rotate: RTCVideoRotation = RTCVideoRotation._180
-    var rtcVideoCapturer: RTCVideoCapturer?
+    weak var rtcVideoCapturer: RTCVideoCapturer?
     
     init(videoSource: RTCVideoSource? = nil) {
         self.videoSource = videoSource
         self.virtualBackground = RTCVirtualBackground()
+    }
+    
+    deinit {
+        print("RTCVirtualBackground deinit called")
+        self.videoSource = nil
+        self.virtualBackground = nil
+        self.backgroundImage = nil
+        self.rtcVideoCapturer = nil
     }
     
     func didReceive(_ pixelBuffer: CVPixelBuffer!, width: Int32, height: Int32, timestamp: Int64) {

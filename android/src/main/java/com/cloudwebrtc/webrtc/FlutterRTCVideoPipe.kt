@@ -15,14 +15,12 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.cloudwebrtc.webrtc.models.CacheFrame
-import com.cloudwebrtc.webrtc.models.StyleEffect
 import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.pixpark.gpupixel.GPUPixelSource.ProcessedFrameDataCallback
-import kotlinx.coroutines.runBlocking
 import org.webrtc.EglBase
 import org.webrtc.SurfaceTextureHelper
 import org.webrtc.TextureBufferImpl
@@ -35,9 +33,8 @@ import org.webrtc.YuvHelper
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.Arrays
-import java.util.concurrent.Executors
 
-class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
+class FlutterRTCVideoPipe {
     var isGpuSupported = false
     private val tag: String = "[FlutterRTC-VideoPipe]"
     private var videoSource: VideoSource? = null
@@ -49,10 +46,31 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
     private val bitmapMap = HashMap<Long, CacheFrame>()
     private var lastProcessedFrameTime: Long = 0
     private val targetFrameInterval: Long = 1000 / 24 // 1000 milliseconds divided by 24 FPS
-    private val virtualBackground: FlutterRTCVirtualBackground = FlutterRTCVirtualBackground()
+    private var virtualBackground: FlutterRTCVirtualBackground? = null
+    private var beautyFilters: FlutterRTCBeautyFilters? = null
+    private var textureId: Int = 0
 
     fun initialize(context: Context, videoSource: VideoSource) {
         this.videoSource = videoSource
+        this.virtualBackground = FlutterRTCVirtualBackground()
+
+        if (this.beautyFilters == null) {
+            this.beautyFilters = FlutterRTCBeautyFilters(context)
+
+            val beautyFiltersCallBack: ProcessedFrameDataCallback = ProcessedFrameDataCallback {
+                if (backgroundBitmap != null) {
+                    // Segment the input bitmap using the ImageSegmentationHelper
+                    val frameTimeMs: Long = SystemClock.uptimeMillis()
+                    bitmapMap[frameTimeMs] = CacheFrame(originalBitmap = it)
+
+                    imageSegmentationHelper?.segmentLiveStreamFrame(it, frameTimeMs)
+                } else {
+                    this.emitBitmapOnFrame(it)
+                }
+            }
+
+            beautyFilters?.setCallback(beautyFiltersCallBack)
+        }
 
         // Enable GPU
         val useGpuTask = TfLiteGpu.isGpuDelegateAvailable(context)
@@ -66,20 +84,6 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
                         .build())
             }
         }
-
-        val beautyFiltersCallBack: ProcessedFrameDataCallback = ProcessedFrameDataCallback {
-            if (backgroundBitmap != null) {
-                // Segment the input bitmap using the ImageSegmentationHelper
-                val frameTimeMs: Long = SystemClock.uptimeMillis()
-                bitmapMap[frameTimeMs] = CacheFrame(originalBitmap = it)
-
-                imageSegmentationHelper?.segmentLiveStreamFrame(it, frameTimeMs)
-            } else {
-                this.emitBitmapOnFrame(it)
-            }
-        }
-
-        beautyFilters.initialize(beautyFiltersCallBack, context)
 
         this.imageSegmentationHelper = ImageSegmenterHelper(
             context = context,
@@ -98,11 +102,11 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
                     val maskHeight = resultBundle.height
 
                     val bitmap = cacheFrame.originalBitmap
-                    val mask = virtualBackground.convertFloatBufferToByteBuffer(maskFloat)
+                    val mask = virtualBackground?.convertFloatBufferToByteBuffer(maskFloat)
 
                     // Convert the buffer to an array of colors
-                    val colors = virtualBackground.maskColorsFromByteBuffer(
-                        mask,
+                    val colors = virtualBackground?.maskColorsFromByteBuffer(
+                        mask!!,
                         maskWidth,
                         maskHeight,
                         bitmap,
@@ -110,7 +114,7 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
                     )
 
                     // Create the segmented bitmap from the color array
-                    val segmentedBitmap = virtualBackground.createBitmapFromColors(colors, bitmap.width, bitmap.height)
+                    val segmentedBitmap = virtualBackground?.createBitmapFromColors(colors!!, bitmap.width, bitmap.height)
 
                     if (backgroundBitmap == null) {
                         // If the background bitmap is null, return without further processing
@@ -118,7 +122,7 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
                     }
 
                     // Draw the segmented bitmap on top of the background for human segments
-                    val outputBitmap = virtualBackground.drawSegmentedBackground(segmentedBitmap, backgroundBitmap)
+                    val outputBitmap = virtualBackground?.drawSegmentedBackground(segmentedBitmap, backgroundBitmap)
 
                     if (outputBitmap != null) {
                         emitBitmapOnFrame(outputBitmap)
@@ -133,7 +137,16 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
     fun dispose() {
         this.videoSource = null
         this.expectConfidence = 0.7
+        this.sink = null
+        this.bitmapMap.clear()
+        this.backgroundBitmap = null
+        this.imageSegmentationHelper = null
+        this.backgroundBitmap = null
+        this.virtualBackground = null
+        this.textureHelper?.dispose()
+        this.textureHelper = null
         resetBackground()
+        releaseTexture()
     }
 
     fun resetBackground() {
@@ -172,7 +185,7 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
                         // Otherwise, perform segmentation on the captured frame and replace the background
                         val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
                         if (inputFrameBitmap != null) {
-                            beautyFilters.processBitmap(inputFrameBitmap)
+                            beautyFilters?.processBitmap(inputFrameBitmap)
                         } else {
                             Log.d(tag, "Convert video frame to bitmap failure")
                         }
@@ -255,56 +268,93 @@ class FlutterRTCVideoPipe(val beautyFilters: FlutterRTCBeautyFilters) {
     }
 
     private fun emitBitmapOnFrame(bitmap: Bitmap) {
-        // Create a new VideoFrame from the processed bitmap
-        val yuvConverter = YuvConverter()
         textureHelper?.handler?.post {
-            val textures = IntArray(1)
-            GLES20.glGenTextures(1, textures, 0)
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
-
-            // Adjust texture coordinates if needed
-            GLES20.glTexParameteri(
-                GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_MIN_FILTER,
-                GLES20.GL_NEAREST
-            )
-            GLES20.glTexParameteri(
-                GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_MAG_FILTER,
-                GLES20.GL_NEAREST
-            )
-
-            // Create a copy of the original bitmap
             var outputBitmap = bitmap.copy(bitmap.config, true)
 
-            // Check and adjust bitmap orientation if needed
             val matrix = Matrix()
             matrix.postScale(1f, -1f) // Flip vertically
             outputBitmap = Bitmap.createBitmap(outputBitmap, 0, 0, outputBitmap.width, outputBitmap.height, matrix, true)
 
-            // Update texture with adjusted bitmap
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
+            if (textureId == 0) {
+                textureId = createTexture(outputBitmap)
+            } else {
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
+            }
 
-            val buffer = TextureBufferImpl(
-                outputBitmap.width,
-                outputBitmap.height,
-                VideoFrame.TextureBuffer.Type.RGB,
-                textures[0],
-                Matrix(),
-                textureHelper!!.handler,
-                yuvConverter,
-                null
-            )
-            val i420Buf = yuvConverter.convert(buffer)
+            var i420Buf: VideoFrame.I420Buffer? = null
+            var buffer: TextureBufferImpl? = null
 
+            try {
+                val yuvConverter = YuvConverter()
 
-            if (i420Buf != null) {
-                // Create the output VideoFrame and send it to the sink
-                val frameTimeMs: Long = SystemClock.uptimeMillis()
-                val outputVideoFrame =
-                    VideoFrame(i420Buf, 0, frameTimeMs * 1000)
-                sink?.onFrame(outputVideoFrame)
+                buffer = TextureBufferImpl(
+                    outputBitmap.width,
+                    outputBitmap.height,
+                    VideoFrame.TextureBuffer.Type.RGB,
+                    textureId,
+                    Matrix(),
+                    textureHelper!!.handler,
+                    yuvConverter,
+                    null
+                )
+
+                i420Buf = yuvConverter.convert(buffer)
+
+                if (i420Buf != null) {
+                    val frameTimeMs: Long = SystemClock.uptimeMillis()
+                    val outputVideoFrame = VideoFrame(i420Buf, 0, frameTimeMs * 1000)
+                    sink?.onFrame(outputVideoFrame)
+                    // Release I420 buffer after use
+                    i420Buf.release()
+                    yuvConverter.release()
+                }
+            } finally {
+                // Ensure the buffer is released even in case of exceptions
+                buffer?.release()
+                outputBitmap.recycle()
             }
         }
+    }
+
+    private fun createTexture(bitmap: Bitmap): Int {
+        val textures = IntArray(1)
+        GLES20.glGenTextures(1, textures, 0)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
+
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST)
+
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+
+        return textures[0]
+    }
+
+    private fun releaseTexture() {
+        if (textureId != 0) {
+            val textures = intArrayOf(textureId)
+            GLES20.glDeleteTextures(1, textures, 0)
+            textureId = 0
+        }
+    }
+
+    fun setThinValue(value: Float) {
+        this.beautyFilters?.setThinValue(value)
+    }
+
+    fun setBigEyesValue(value: Float) {
+        this.beautyFilters?.setBigEyesValue(value)
+    }
+
+    fun setBeautyValue(value: Float) {
+        this.beautyFilters?.setBeautyValue(value)
+    }
+
+    fun setLipstickValue(value: Float) {
+        this.beautyFilters?.setLipstickValue(value)
+    }
+
+    fun setWhiteValue(value: Float) {
+        this.beautyFilters?.setWhiteValue(value)
     }
 }
