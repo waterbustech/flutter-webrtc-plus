@@ -207,64 +207,67 @@ class FlutterRTCVideoPipe {
      * @param videoFrame The input VideoFrame to be converted.
      * @return The corresponding Bitmap representation of the VideoFrame.
      */
-    private fun videoFrameToBitmap(videoFrame: VideoFrame): Bitmap {
-        // Retain the VideoFrame to prevent it from being garbage collected
-        videoFrame.retain()
+    private fun videoFrameToBitmap(videoFrame: VideoFrame): Bitmap? {
+        try {
+            // Retain the VideoFrame to prevent it from being garbage collected
+            videoFrame.retain()
 
-        // Convert the VideoFrame to I420 format
-        val buffer = videoFrame.buffer
-        val i420Buffer = buffer.toI420()
-        val y = i420Buffer!!.dataY
-        val u = i420Buffer.dataU
-        val v = i420Buffer.dataV
-        val width = i420Buffer.width
-        val height = i420Buffer.height
-        val strides = intArrayOf(
-            i420Buffer.strideY,
-            i420Buffer.strideU,
-            i420Buffer.strideV
-        )
+            // Convert the VideoFrame to I420 format
+            val buffer = videoFrame.buffer
+            val i420Buffer = buffer.toI420() ?: return null // Handle null case
+            val y = i420Buffer.dataY
+            val u = i420Buffer.dataU
+            val v = i420Buffer.dataV
+            val width = i420Buffer.width
+            val height = i420Buffer.height
+            val strides = intArrayOf(
+                i420Buffer.strideY,
+                i420Buffer.strideU,
+                i420Buffer.strideV
+            )
 
-        // Convert I420 format to NV12 format as required by YuvImage
-        val chromaWidth = (width + 1) / 2
-        val chromaHeight = (height + 1) / 2
-        val minSize = width * height + chromaWidth * chromaHeight * 2
-        val yuvBuffer = ByteBuffer.allocateDirect(minSize)
-        YuvHelper.I420ToNV12(
-            y,
-            strides[0],
-            v,
-            strides[2],
-            u,
-            strides[1],
-            yuvBuffer,
-            width,
-            height
-        )
-        // Remove leading 0 from the ByteBuffer
-        val cleanedArray =
-            Arrays.copyOfRange(yuvBuffer.array(), yuvBuffer.arrayOffset(), minSize)
-        val yuvImage = YuvImage(
-            cleanedArray,
-            ImageFormat.NV21,
-            width,
-            height,
-            null
-        )
-        i420Buffer.release()
-        videoFrame.release()
+            // Convert I420 format to NV12 format as required by YuvImage
+            val yuvBuffer = ByteBuffer.allocateDirect(width * height * 3 / 2)
+            YuvHelper.I420ToNV12(
+                y,
+                strides[0],
+                v,
+                strides[2],
+                u,
+                strides[1],
+                yuvBuffer,
+                width,
+                height
+            )
 
-//        // Convert YuvImage to byte array
-        val outputStream = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(
-            Rect(0, 0, yuvImage.width, yuvImage.height),
-            85,
-            outputStream
-        )
-        val jpegData = outputStream.toByteArray()
+            // Convert YuvImage to Bitmap
+            val yuvImage = YuvImage(
+                yuvBuffer.array(),
+                ImageFormat.NV21,  // NV21 is compatible with NV12 for BitmapFactory
+                width,
+                height,
+                null
+            )
 
-        // Convert byte array to Bitmap
-        return BitmapFactory.decodeByteArray(jpegData, 0, jpegData.size)
+            val outputStream = ByteArrayOutputStream()
+            yuvImage.compressToJpeg(
+                Rect(0, 0, width, height),
+                85,
+                outputStream
+            )
+            val jpegData = outputStream.toByteArray()
+
+            // Release resources
+            i420Buffer.release()
+            videoFrame.release()
+
+            // Convert byte array to Bitmap
+            return BitmapFactory.decodeByteArray(jpegData, 0, jpegData.size)
+        } catch (e: Exception) {
+            // Handle any exceptions and return null
+            e.printStackTrace()
+            return null
+        }
     }
 
     private fun emitBitmapOnFrame(bitmap: Bitmap) {
