@@ -1,6 +1,24 @@
 # Changelog
 
 --------------------------------------------
+[0.11.1+1] - 2024-07-08
+
+* [iOS/macOS] Upgrade KaiRTC to 125.6422.03
+
+[0.11.1] - 2024-06-17
+
+* [macOS] Downgrade macOS system dependencies to 10.14.
+
+[0.11.0] - 2024-06-17
+
+* [Native] upgrade libwebrtc to m125.6422.
+
+[0.10.8] - 2024-06-05
+
+* [iOS] fix(platform_view): fit cover works wrong (#1593)
+* [iOS/macOS] fix: Fix the issue that the video is not displayed when using 'video': true (#1592)
+* [Web] bump dart_webrtc to 1.4.6.
+  
 [0.10.7+5] - 2024-06-23
 
 * [Android/Darwin] Fix memory leaks - release BeautyFilters,.. after use

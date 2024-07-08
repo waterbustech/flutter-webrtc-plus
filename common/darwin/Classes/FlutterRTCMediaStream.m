@@ -46,13 +46,15 @@ typedef void (^NavigatorUserMediaErrorCallback)(NSString* errorType, NSString* e
  */
 typedef void (^NavigatorUserMediaSuccessCallback)(RTCMediaStream* mediaStream);
 
+- (NSDictionary*)defaultVideoConstraints {
+    return @{@"minWidth" : @"1280", @"minHeight" : @"720", @"minFrameRate" : @"30"};
+}
+
 - (RTCMediaConstraints*)defaultMediaStreamConstraints {
-    NSDictionary* mandatoryConstraints =
-    @{@"minWidth" : @"1280", @"minHeight" : @"720", @"minFrameRate" : @"30"};
-    RTCMediaConstraints* constraints =
-    [[RTCMediaConstraints alloc] initWithMandatoryConstraints:mandatoryConstraints
-                                          optionalConstraints:nil];
-    return constraints;
+  RTCMediaConstraints* constraints =
+      [[RTCMediaConstraints alloc] initWithMandatoryConstraints:[self defaultVideoConstraints]
+                                            optionalConstraints:nil];
+  return constraints;
 }
 
 /**
