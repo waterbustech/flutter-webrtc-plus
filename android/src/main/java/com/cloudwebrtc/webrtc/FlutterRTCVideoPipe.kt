@@ -21,6 +21,10 @@ import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.pixpark.gpupixel.GPUPixelSource.ProcessedFrameDataCallback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.webrtc.EglBase
 import org.webrtc.SurfaceTextureHelper
 import org.webrtc.TextureBufferImpl
@@ -272,50 +276,61 @@ class FlutterRTCVideoPipe {
 
     private fun emitBitmapOnFrame(bitmap: Bitmap) {
         textureHelper?.handler?.post {
-            var outputBitmap = bitmap.copy(bitmap.config, true)
+            // Launch a coroutine in the IO context for bitmap processing
+            CoroutineScope(Dispatchers.IO).launch {
+                // Reduce the resolution of the bitmap
+                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width / 2, bitmap.height / 2, true)
+                var outputBitmap = scaledBitmap.copy(scaledBitmap.config, true)
 
-            val matrix = Matrix()
-            matrix.postScale(1f, -1f) // Flip vertically
-            outputBitmap = Bitmap.createBitmap(outputBitmap, 0, 0, outputBitmap.width, outputBitmap.height, matrix, true)
+                val matrix = Matrix()
+                matrix.postScale(1f, -1f) // Flip vertically
+                outputBitmap = Bitmap.createBitmap(outputBitmap, 0, 0, outputBitmap.width, outputBitmap.height, matrix, true)
 
-            if (textureId == 0) {
-                textureId = createTexture(outputBitmap)
-            } else {
-                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
-            }
-
-            var i420Buf: VideoFrame.I420Buffer? = null
-            var buffer: TextureBufferImpl? = null
-
-            try {
-                val yuvConverter = YuvConverter()
-
-                buffer = TextureBufferImpl(
-                    outputBitmap.width,
-                    outputBitmap.height,
-                    VideoFrame.TextureBuffer.Type.RGB,
-                    textureId,
-                    Matrix(),
-                    textureHelper!!.handler,
-                    yuvConverter,
-                    null
-                )
-
-                i420Buf = yuvConverter.convert(buffer)
-
-                if (i420Buf != null) {
-                    val frameTimeMs: Long = SystemClock.uptimeMillis()
-                    val outputVideoFrame = VideoFrame(i420Buf, 0, frameTimeMs * 1000)
-                    sink?.onFrame(outputVideoFrame)
-                    // Release I420 buffer after use
-                    i420Buf.release()
-                    yuvConverter.release()
+                val textureId = if (textureId == 0) {
+                    createTexture(outputBitmap)
+                } else {
+                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+                    GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
+                    textureId
                 }
-            } finally {
-                // Ensure the buffer is released even in case of exceptions
-                buffer?.release()
-                outputBitmap.recycle()
+
+                var i420Buf: VideoFrame.I420Buffer? = null
+                var buffer: TextureBufferImpl? = null
+
+                try {
+                    val yuvConverter = YuvConverter()
+
+                    buffer = TextureBufferImpl(
+                        outputBitmap.width,
+                        outputBitmap.height,
+                        VideoFrame.TextureBuffer.Type.RGB,
+                        textureId,
+                        Matrix(),
+                        textureHelper!!.handler,
+                        yuvConverter,
+                        null
+                    )
+
+                    i420Buf = yuvConverter.convert(buffer)
+
+                    if (i420Buf != null) {
+                        val frameTimeMs: Long = SystemClock.uptimeMillis()
+                        val outputVideoFrame = VideoFrame(i420Buf, 0, frameTimeMs * 1000)
+
+                        withContext(Dispatchers.Main) {
+                            sink?.onFrame(outputVideoFrame)
+                        }
+
+                        // Release I420 buffer after use
+                        i420Buf.release()
+                    }
+
+                    yuvConverter.release()
+                } finally {
+                    // Ensure the buffer is released even in case of exceptions
+                    buffer?.release()
+                    outputBitmap.recycle()
+                }
             }
         }
     }
@@ -325,11 +340,10 @@ class FlutterRTCVideoPipe {
         GLES20.glGenTextures(1, textures, 0)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
 
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
 
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
-
         return textures[0]
     }
 
