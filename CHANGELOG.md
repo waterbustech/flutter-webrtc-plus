@@ -1,6 +1,11 @@
 # Changelog
 
 --------------------------------------------
+[0.11.2] - 2024-07-09
+
+* [Windows] fix crash for windows.
+* [Darwin] bump WebRTC version for darwin.
+
 [0.11.1+1] - 2024-07-08
 
 * [iOS/macOS] Upgrade KaiRTC to 125.6422.03
