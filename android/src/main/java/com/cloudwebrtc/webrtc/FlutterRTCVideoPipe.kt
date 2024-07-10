@@ -8,8 +8,6 @@ import android.graphics.ImageFormat
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.YuvImage
-import android.opengl.GLES20
-import android.opengl.GLUtils
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
@@ -21,28 +19,19 @@ import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.pixpark.gpupixel.GPUPixelSource.ProcessedFrameDataCallback
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.webrtc.EglBase
-import org.webrtc.SurfaceTextureHelper
-import org.webrtc.TextureBufferImpl
+import org.webrtc.JavaI420Buffer
 import org.webrtc.VideoFrame
 import org.webrtc.VideoProcessor
 import org.webrtc.VideoSink
 import org.webrtc.VideoSource
-import org.webrtc.YuvConverter
 import org.webrtc.YuvHelper
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import java.util.Arrays
 
 class FlutterRTCVideoPipe {
     var isGpuSupported = false
     private val tag: String = "[FlutterRTC-VideoPipe]"
     private var videoSource: VideoSource? = null
-    private var textureHelper: SurfaceTextureHelper? = null
     private var backgroundBitmap: Bitmap? = null
     private var expectConfidence = 0.7
     private var imageSegmentationHelper: ImageSegmenterHelper? = null
@@ -52,7 +41,6 @@ class FlutterRTCVideoPipe {
     private val targetFrameInterval: Long = 1000 / 24 // 1000 milliseconds divided by 24 FPS
     private var virtualBackground: FlutterRTCVirtualBackground? = null
     private var beautyFilters: FlutterRTCBeautyFilters? = null
-    private var textureId: Int = 0
 
     fun initialize(context: Context, videoSource: VideoSource) {
         this.videoSource = videoSource
@@ -147,10 +135,7 @@ class FlutterRTCVideoPipe {
         this.imageSegmentationHelper = null
         this.backgroundBitmap = null
         this.virtualBackground = null
-        this.textureHelper?.dispose()
-        this.textureHelper = null
         resetBackground()
-        releaseTexture()
     }
 
     fun resetBackground() {
@@ -163,8 +148,6 @@ class FlutterRTCVideoPipe {
     }
 
     private fun processFrame() {
-        val eglBase = EglBase.create()
-        textureHelper = SurfaceTextureHelper.create("SurfaceTextureThread", eglBase.eglBaseContext)
         videoSource?.setVideoProcessor(object : VideoProcessor {
             override fun onCapturerStarted(success: Boolean) {
                 // Handle video capture start event
@@ -275,84 +258,75 @@ class FlutterRTCVideoPipe {
     }
 
     private fun emitBitmapOnFrame(bitmap: Bitmap) {
-        textureHelper?.handler?.post {
-            // Launch a coroutine in the IO context for bitmap processing
-            CoroutineScope(Dispatchers.IO).launch {
-                // Reduce the resolution of the bitmap
-                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width / 2, bitmap.height / 2, true)
-                var outputBitmap = scaledBitmap.copy(scaledBitmap.config, true)
+        // Reduce the resolution of the bitmap
+        var outputBitmap = bitmap.copy(bitmap.config, true)
 
-                val matrix = Matrix()
-                matrix.postScale(1f, -1f) // Flip vertically
-                outputBitmap = Bitmap.createBitmap(outputBitmap, 0, 0, outputBitmap.width, outputBitmap.height, matrix, true)
+        val matrix = Matrix()
+        outputBitmap = Bitmap.createBitmap(outputBitmap, 0, 0, outputBitmap.width, outputBitmap.height, matrix, true)
 
-                val textureId = if (textureId == 0) {
-                    createTexture(outputBitmap)
-                } else {
-                    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-                    GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, outputBitmap, 0)
-                    textureId
-                }
+        val frame = convertBitmapToVideoFrame(outputBitmap)
 
-                var i420Buf: VideoFrame.I420Buffer? = null
-                var buffer: TextureBufferImpl? = null
+        sink?.onFrame(frame)
+    }
 
-                try {
-                    val yuvConverter = YuvConverter()
+    private fun convertBitmapToVideoFrame(bitmap: Bitmap): VideoFrame? {
+        // Create the buffer for the video frame
+        val width = bitmap.width
+        val height = bitmap.height
 
-                    buffer = TextureBufferImpl(
-                        outputBitmap.width,
-                        outputBitmap.height,
-                        VideoFrame.TextureBuffer.Type.RGB,
-                        textureId,
-                        Matrix(),
-                        textureHelper!!.handler,
-                        yuvConverter,
-                        null
-                    )
+        // Calculate the size of the Y, U, and V buffers
+        val ySize = width * height
+        val uvSize = ySize / 4
 
-                    i420Buf = yuvConverter.convert(buffer)
+        // Allocate buffers for Y, U, and V planes
+        val yBuffer = ByteBuffer.allocateDirect(ySize)
+        val uBuffer = ByteBuffer.allocateDirect(uvSize)
+        val vBuffer = ByteBuffer.allocateDirect(uvSize)
 
-                    if (i420Buf != null) {
-                        val frameTimeMs: Long = SystemClock.uptimeMillis()
-                        val outputVideoFrame = VideoFrame(i420Buf, 0, frameTimeMs * 1000)
+        // Lock the bitmap to get the pixel data
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
 
-                        withContext(Dispatchers.Main) {
-                            sink?.onFrame(outputVideoFrame)
-                        }
+        // Fill the Y, U, and V buffers with the pixel data
+        for (i in pixels.indices) {
+            val color = pixels[i]
 
-                        // Release I420 buffer after use
-                        i420Buf.release()
-                    }
+            // Extract the R, G, and B components
+            val r = (color shr 16) and 0xFF
+            val g = (color shr 8) and 0xFF
+            val b = color and 0xFF
 
-                    yuvConverter.release()
-                } finally {
-                    // Ensure the buffer is released even in case of exceptions
-                    buffer?.release()
-                    outputBitmap.recycle()
-                }
+            // Calculate Y, U, and V values
+            val y = (0.299 * r + 0.587 * g + 0.114 * b).toInt()
+            val u = (-0.169 * r - 0.331 * g + 0.5 * b + 128).toInt()
+            val v = (0.5 * r - 0.419 * g - 0.081 * b + 128).toInt()
+
+            // Fill the Y buffer
+            yBuffer.put(y.toByte())
+
+            // Fill the U and V buffers (4:2:0 subsampling)
+            if (i % 2 == 0 && (i / width) % 2 == 0) {
+                uBuffer.put(u.toByte())
+                vBuffer.put(v.toByte())
             }
         }
-    }
 
-    private fun createTexture(bitmap: Bitmap): Int {
-        val textures = IntArray(1)
-        GLES20.glGenTextures(1, textures, 0)
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0])
+        // Rewind the buffers to prepare for reading
+        yBuffer.rewind()
+        uBuffer.rewind()
+        vBuffer.rewind()
 
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        // Create the I420 buffer
+        val i420Buffer = JavaI420Buffer.wrap(
+            width, height,
+            yBuffer, width,
+            uBuffer, width / 2,
+            vBuffer, width / 2,
+            null
+        )
 
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
-        return textures[0]
-    }
-
-    private fun releaseTexture() {
-        if (textureId != 0) {
-            val textures = intArrayOf(textureId)
-            GLES20.glDeleteTextures(1, textures, 0)
-            textureId = 0
-        }
+        // Create the video frame
+        return VideoFrame(i420Buffer, 0, System.nanoTime())
     }
 
     fun setThinValue(value: Float) {
