@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.11.2+2] - 2024-07-30
+
+* [Web] Upgrade dart_webrtc for support compile wasm
+
 [0.11.2+1] - 2024-07-11
 
 * [Android] Improve performance when convert Bitmap to VideoFrame
