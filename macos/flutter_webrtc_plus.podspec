@@ -15,7 +15,7 @@ A new flutter plugin project.
   s.source_files     = ['Classes/**/*']
 
   s.dependency 'FlutterMacOS'
-  s.dependency 'KaiRTC', '125.6422.03'
+  s.dependency 'KaiRTC', '128.6613.01'
   s.osx.deployment_target = '11.0'
 
   s.prepare_command = <<-CMD
