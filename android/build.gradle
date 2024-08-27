@@ -79,7 +79,7 @@ project.ext.TEST_ASSETS_DIR = projectDir.toString() + '/src/androidTest/assets'
 apply from: 'download_models.gradle'
 
 dependencies {
-    implementation 'tech.waterbus:webrtc:128.6613.01'
+    implementation 'tech.waterbus:webrtc:128.6613.02'
     implementation 'com.github.davidliu:audioswitch:89582c47c9a04c62f90aa5e57251af4800a62c9a'
     implementation 'androidx.annotation:annotation:1.8.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
