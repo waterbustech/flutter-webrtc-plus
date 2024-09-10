@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.11.2+5] - 2024-09-10
+
+* [Chore] Upgrade dart_webrtc_plus support web: ^1.0.0
+
 [0.11.2+4] - 2024-08-27
 
 * [All] Upgrade KaiRTC to 128.6613.02
