@@ -1,9 +1,13 @@
 # Changelog
 
 --------------------------------------------
-[0.11.2+5] - 2024-09-10
+[0.11.2+6] - 2024-09-10
 
 * [Chore] Upgrade dart_webrtc_plus support web: ^1.0.0
+
+[0.11.2+5] - 2024-08-29
+
+* [Docs] Update setup beauty filters for Android
 
 [0.11.2+4] - 2024-08-27
 
