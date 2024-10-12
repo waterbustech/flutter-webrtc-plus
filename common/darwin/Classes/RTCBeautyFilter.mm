@@ -10,6 +10,10 @@
 
 using namespace gpupixel;
 
+static void releaseARGBData(void *releaseRefCon, const void *baseAddress) {
+    free((void*)baseAddress);
+}
+
 @interface RTCBeautyFilter () {
     std::shared_ptr<SourceRawDataInput> gpuPixelRawInput;
     std::shared_ptr<BeautyFaceFilter> beauty_face_filter_;
@@ -100,14 +104,12 @@ using namespace gpupixel;
                                                            &pixelBuffer);
             
 #else
-            // macOS: Convert ABGR or BGRA to ARGB
-            // Create a new buffer to store ARGB pixel data
             uint8_t* argbData = (uint8_t*)malloc(stride * height);
             if (!argbData) {
                 NSLog(@"Error: Unable to allocate memory for ARGB pixel data");
                 return;
             }
-            
+
             // Convert ABGR or BGRA to ARGB
             for (int i = 0; i < width * height; ++i) {
                 argbData[i * 4 + 0] = data[i * 4 + 3];  // Alpha
@@ -115,26 +117,32 @@ using namespace gpupixel;
                 argbData[i * 4 + 2] = data[i * 4 + 1];  // Green
                 argbData[i * 4 + 3] = data[i * 4 + 2];  // Blue
             }
-            
+
             // Create pixel buffer attributes
             NSDictionary *options = @{
                 (NSString *)kCVPixelBufferCGImageCompatibilityKey: @YES,
                 (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey: @YES
             };
-            
-            // Create pixel buffer
-            CVReturn result = CVPixelBufferCreateWithBytes(kCFAllocatorDefault,
-                                                           width,
-                                                           height,
-                                                           kCVPixelFormatType_32ARGB,
-                                                           (void *)argbData,
-                                                           stride,
-                                                           NULL,
-                                                           NULL,
-                                                           (__bridge CFDictionaryRef)options,
-                                                           &pixelBuffer);
-            
-            free(argbData);  // Free the memory allocated for ARGB data
+
+            // Create pixel buffer with a release callback to free argbData
+            CVReturn result = CVPixelBufferCreateWithBytes(
+                kCFAllocatorDefault,
+                width,
+                height,
+                kCVPixelFormatType_32ARGB,
+                (void *)argbData,
+                stride,
+                releaseARGBData,  // Custom deallocator
+                NULL,  // No reference context needed
+                (__bridge CFDictionaryRef)options,
+                &pixelBuffer
+            );
+
+            if (result != kCVReturnSuccess) {
+                NSLog(@"Error: Unable to create pixel buffer");
+                free(argbData);  // Free the buffer manually in case of failure
+            }
+
 #endif
             
             if (result != kCVReturnSuccess) {

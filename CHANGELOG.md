@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.11.2+7] - 2024-10-12
+
+* [Fix] release buffer after convert result GPUPixel on macOS
+
 [0.11.2+6] - 2024-09-10
 
 * [Chore] Upgrade dart_webrtc_plus support web: ^1.0.0
