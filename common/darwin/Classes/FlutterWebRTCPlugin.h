@@ -52,12 +52,13 @@ typedef void (^CapturerStopHandler)(CompletionHandler _Nonnull handler);
 @property(nonatomic) NSInteger _lastTargetHeight;
 @property(nonatomic) NSInteger _lastTargetFps;
 
-- (RTCMediaStream*)streamForId:(NSString*)streamId peerConnectionId:(NSString*)peerConnectionId;
-- (RTCRtpTransceiver*)getRtpTransceiverById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id;
-- (NSDictionary*)mediaStreamToMap:(RTCMediaStream*)stream ownerTag:(NSString*)ownerTag;
-- (NSDictionary*)mediaTrackToMap:(RTCMediaStreamTrack*)track;
-- (NSDictionary*)receiverToMap:(RTCRtpReceiver*)receiver;
-- (NSDictionary*)transceiverToMap:(RTCRtpTransceiver*)transceiver;
+- (RTCMediaStream* _Nullable)streamForId:(NSString* _Nonnull)streamId peerConnectionId:(NSString* _Nullable)peerConnectionId;
+- (RTCMediaStreamTrack* _Nullable)trackForId:(NSString* _Nonnull)trackId peerConnectionId:(NSString* _Nullable)peerConnectionId;
+- (RTCRtpTransceiver* _Nullable)getRtpTransceiverById:(RTCPeerConnection* _Nonnull)peerConnection Id:(NSString* _Nullable)Id;
+- (NSDictionary* _Nullable)mediaStreamToMap:(RTCMediaStream* _Nonnull)stream ownerTag:(NSString* _Nullable)ownerTag;
+- (NSDictionary* _Nullable)mediaTrackToMap:(RTCMediaStreamTrack* _Nonnull)track;
+- (NSDictionary* _Nullable)receiverToMap:(RTCRtpReceiver* _Nonnull)receiver;
+- (NSDictionary* _Nullable)transceiverToMap:(RTCRtpTransceiver* _Nonnull)transceiver;
 
 - (BOOL)hasLocalAudioTrack;
 - (void)ensureAudioSession;
@@ -67,5 +68,7 @@ typedef void (^CapturerStopHandler)(CompletionHandler _Nonnull handler);
 + (NSString *)sharedPeerConnectionId;
 - (RTCRtpReceiver*)getRtpReceiverById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id;
 - (RTCRtpSender*)getRtpSenderById:(RTCPeerConnection*)peerConnection Id:(NSString*)Id;
+
++ (FlutterWebRTCPlugin * _Nullable)sharedSingleton;
 
 @end

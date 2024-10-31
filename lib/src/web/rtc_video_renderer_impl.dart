@@ -40,7 +40,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
 
   static const _elementIdForAudioManager = 'html_webrtc_audio_manager_list';
 
-  web.AudioElement? _audioElement;
+  web.HTMLAudioElement? _audioElement;
 
   static int _textureCounter = 1;
 
@@ -134,7 +134,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
 
     if (null != _audioStream) {
       if (null == _audioElement) {
-        _audioElement = web.AudioElement()
+        _audioElement = web.HTMLAudioElement()
           ..id = _elementIdForAudio
           ..muted = stream.ownerTag == 'local'
           ..autoplay = true;
@@ -184,7 +184,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
 
     if (null != _audioStream) {
       if (null == _audioElement) {
-        _audioElement = web.AudioElement()
+        _audioElement = web.HTMLAudioElement()
           ..id = _elementIdForAudio
           ..muted = stream.ownerTag == 'local'
           ..autoplay = true;
@@ -213,9 +213,9 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
     return div as web.HTMLDivElement;
   }
 
-  web.VideoElement? findHtmlView() {
+  web.HTMLVideoElement? findHtmlView() {
     final element = web.document.getElementById(_elementIdForVideo);
-    if (null != element) return element as web.VideoElement;
+    if (null != element) return element as web.HTMLVideoElement;
     return null;
   }
 
@@ -261,7 +261,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
       }
       _subscriptions.clear();
 
-      final element = web.VideoElement()
+      final element = web.HTMLVideoElement()
         ..autoplay = true
         ..muted = true
         ..controls = false
@@ -311,7 +311,7 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
     });
   }
 
-  void _applyDefaultVideoStyles(web.VideoElement element) {
+  void _applyDefaultVideoStyles(web.HTMLVideoElement element) {
     // Flip the video horizontally if is mirrored.
     if (mirror) {
       element.style.transform = 'scaleX(-1)';

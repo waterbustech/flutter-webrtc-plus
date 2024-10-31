@@ -12,10 +12,6 @@ enum AppleAudioMode {
   voicePrompt,
 }
 
-extension AppleAudioModeExt on AppleAudioMode {
-  String get value => name;
-}
-
 extension AppleAudioModeEnumEx on String {
   AppleAudioMode toAppleAudioMode() =>
       AppleAudioMode.values.firstWhere((d) => d.name == toLowerCase());
@@ -27,10 +23,6 @@ enum AppleAudioCategory {
   record,
   playAndRecord,
   multiRoute,
-}
-
-extension AppleAudioCategoryExt on AppleAudioCategory {
-  String get value => name;
 }
 
 extension AppleAudioCategoryEnumEx on String {
@@ -46,10 +38,6 @@ enum AppleAudioCategoryOption {
   allowBluetoothA2DP,
   allowAirPlay,
   defaultToSpeaker,
-}
-
-extension AppleAudioCategoryOptionExt on AppleAudioCategoryOption {
-  String get value => name;
 }
 
 extension AppleAudioCategoryOptionEnumEx on String {
@@ -70,11 +58,11 @@ class AppleAudioConfiguration {
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         if (appleAudioCategory != null)
-          'appleAudioCategory': appleAudioCategory!.value,
+          'appleAudioCategory': appleAudioCategory!.name,
         if (appleAudioCategoryOptions != null)
           'appleAudioCategoryOptions':
-              appleAudioCategoryOptions!.map((e) => e.value).toList(),
-        if (appleAudioMode != null) 'appleAudioMode': appleAudioMode!.value,
+              appleAudioCategoryOptions!.map((e) => e.name).toList(),
+        if (appleAudioMode != null) 'appleAudioMode': appleAudioMode!.name,
       };
 }
 

@@ -6,15 +6,16 @@
 
 #include "rtc_frame_cryptor.h"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 class FlutterFrameCryptorObserver : public libwebrtc::RTCFrameCryptorObserver {
  public:
-  FlutterFrameCryptorObserver(BinaryMessenger* messenger,const std::string& channelName)
+  FlutterFrameCryptorObserver(BinaryMessenger* messenger,
+                              const std::string& channelName)
       : event_channel_(EventChannelProxy::Create(messenger, channelName)) {}
-  void OnFrameCryptionStateChanged(
-      const string participant_id,
-      libwebrtc::RTCFrameCryptionState state);
+  void OnFrameCryptionStateChanged(const string participant_id,
+                                   libwebrtc::RTCFrameCryptionState state);
+
  private:
   std::unique_ptr<EventChannelProxy> event_channel_;
 };
@@ -23,11 +24,12 @@ class FlutterFrameCryptor {
  public:
   FlutterFrameCryptor(FlutterWebRTCBase* base) : base_(base) {}
 
-  // Since this takes ownership of result, ownership will be passed back to 'outResult' if this function fails
+  // Since this takes ownership of result, ownership will be passed back to
+  // 'outResult' if this function fails
   bool HandleFrameCryptorMethodCall(
-    const MethodCallProxy& method_call,
-    std::unique_ptr<MethodResultProxy> result,
-    std::unique_ptr<MethodResultProxy> *outResult);
+      const MethodCallProxy& method_call,
+      std::unique_ptr<MethodResultProxy> result,
+      std::unique_ptr<MethodResultProxy>* outResult);
 
   void FrameCryptorFactoryCreateFrameCryptor(
       const EncodableMap& constraints,
@@ -53,28 +55,28 @@ class FlutterFrameCryptor {
       std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderSetSharedKey(const EncodableMap& constraints,
-                        std::unique_ptr<MethodResultProxy> result);
+                               std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderRatchetSharedKey(const EncodableMap& constraints,
-                         std::unique_ptr<MethodResultProxy> result);
+                                   std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderExportSharedKey(const EncodableMap& constraints,
-                        std::unique_ptr<MethodResultProxy> result);
+                                  std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderSetKey(const EncodableMap& constraints,
-                        std::unique_ptr<MethodResultProxy> result);
+                         std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderRatchetKey(const EncodableMap& constraints,
-                         std::unique_ptr<MethodResultProxy> result);
+                             std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderExportKey(const EncodableMap& constraints,
-                        std::unique_ptr<MethodResultProxy> result);
+                            std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderSetSifTrailer(const EncodableMap& constraints,
-                         std::unique_ptr<MethodResultProxy> result);
+                                std::unique_ptr<MethodResultProxy> result);
 
   void KeyProviderDispose(const EncodableMap& constraints,
-                         std::unique_ptr<MethodResultProxy> result);
+                          std::unique_ptr<MethodResultProxy> result);
 
   // std::unique_ptr<MethodResultProxy> result);
   //   'keyProviderSetKey',
@@ -98,6 +100,6 @@ class FlutterFrameCryptor {
   std::map<std::string, scoped_refptr<libwebrtc::KeyProvider>> key_providers_;
 };
 
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin
 
 #endif  // FLUTTER_WEBRTC_RTC_FRAME_CRYPTOR_HXX

@@ -23,7 +23,7 @@
 
 #include "uuidxx.h"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 using namespace libwebrtc;
 
@@ -82,7 +82,6 @@ class FlutterWebRTCBase {
 
   EventChannelProxy* event_channel();
 
-
   libwebrtc::scoped_refptr<libwebrtc::RTCRtpSender> GetRtpSenderById(
       RTCPeerConnection* pc,
       std::string id);
@@ -126,6 +125,6 @@ class FlutterWebRTCBase {
   std::unique_ptr<EventChannelProxy> event_channel_;
 };
 
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin
 
 #endif  // !FLUTTER_WEBRTC_BASE_HXX

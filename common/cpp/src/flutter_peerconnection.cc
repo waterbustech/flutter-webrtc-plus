@@ -6,7 +6,7 @@
 #include "rtc_dtmf_sender.h"
 #include "rtc_rtp_parameters.h"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 std::string RTCMediaTypeToString(RTCMediaType type) {
   switch (type) {
@@ -1127,7 +1127,6 @@ FlutterPeerConnectionObserver::FlutterPeerConnectionObserver(
   peerconnection->RegisterRTCPeerConnectionObserver(this);
 }
 
-
 void FlutterPeerConnectionObserver::OnSignalingState(RTCSignalingState state) {
   EncodableMap params;
   params[EncodableValue("event")] = "signalingState";
@@ -1142,7 +1141,6 @@ void FlutterPeerConnectionObserver::OnPeerConnectionState(
   params[EncodableValue("state")] = peerConnectionStateString(state);
   event_channel_->Success(EncodableValue(params));
 }
-
 
 void FlutterPeerConnectionObserver::OnIceGatheringState(
     RTCIceGatheringState state) {
@@ -1381,4 +1379,4 @@ void FlutterPeerConnectionObserver::RemoveStreamForId(const std::string& id) {
     remote_streams_.erase(it);
 }
 
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin

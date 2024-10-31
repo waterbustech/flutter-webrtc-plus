@@ -2,7 +2,7 @@
 
 #include "flutter_webrtc_plus/flutter_web_r_t_c_plugin.h"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 FlutterWebRTC::FlutterWebRTC(FlutterWebRTCPlugin* plugin)
     : FlutterWebRTCBase::FlutterWebRTCBase(plugin->messenger(),
@@ -1250,4 +1250,4 @@ void FlutterWebRTC::HandleMethodCall(
   }
 }
 
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin

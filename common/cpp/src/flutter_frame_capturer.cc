@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "svpng.hpp"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 FlutterFrameCapturer::FlutterFrameCapturer(RTCVideoTrack* track,
                                            std::string path) {
@@ -32,7 +32,8 @@ void FlutterFrameCapturer::CaptureFrame(
 
   track_->AddRenderer(this);
   // Here waiting for catch_frame_ is set to true
-  while(!catch_frame_){}
+  while (!catch_frame_) {
+  }
   // Here unlock the mutex
   mutex_.unlock();
 
@@ -73,4 +74,4 @@ bool FlutterFrameCapturer::SaveFrame() {
   return true;
 }
 
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin
