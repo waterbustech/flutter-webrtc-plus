@@ -1557,7 +1557,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     removeTrackForRendererById(trackId);
     track.setEnabled(false);
     if (track.kind().equals("video")) {
-      getUserMediaImpl.removeVideoCapturer(trackId);
+      getUserMediaImpl.removeVideoCapturerSync(trackId);
     }
     localTracks.remove(trackId);
   }
@@ -1651,7 +1651,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       stream.removeTrack((AudioTrack) track);
     } else if (track.kind().equals("video")) {
       stream.removeTrack((VideoTrack) track);
-      getUserMediaImpl.removeVideoCapturer(_trackId);
+      getUserMediaImpl.removeVideoCapturerSync(_trackId);
     }
   }
 
@@ -1949,7 +1949,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     List<VideoTrack> videoTracks = stream.videoTracks;
     for (VideoTrack track : videoTracks) {
       localTracks.remove(track.id());
-      getUserMediaImpl.removeVideoCapturer(track.id());
+      getUserMediaImpl.removeVideoCapturerSync(track.id());
       stream.removeTrack(track);
     }
     List<AudioTrack> audioTracks = stream.audioTracks;

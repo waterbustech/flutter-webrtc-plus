@@ -171,13 +171,16 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
 
 extension CVPixelBuffer {
     func convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation, timeStampNs: Int64) -> RTCVideoFrame? {
-        let rtcPixelBuffer = RTCCVPixelBuffer(pixelBuffer: self)
+        let ciImage = CIImage(cvPixelBuffer: self)
+        guard let formatedBuffer = ciImage.convertCIImageToCVPixelBuffer(pixelFormatType: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) else { return nil }
+        
+        let rtcPixelBuffer = RTCCVPixelBuffer(pixelBuffer: formatedBuffer)
         
         let rtcVideoFrame = RTCVideoFrame(buffer: rtcPixelBuffer, rotation: rotation, timeStampNs: timeStampNs)
         
         return rtcVideoFrame
     }
-    
+
     public func getPixelFormatName() -> String {
         let p = CVPixelBufferGetPixelFormatType(self)
         switch p {
@@ -240,39 +243,44 @@ extension CVPixelBuffer {
 }
 
 extension CIImage {
-    func convertCIImageToCVPixelBuffer() -> CVPixelBuffer? {
-        
+    func convertCIImageToCVPixelBuffer(pixelFormatType: OSType = kCVPixelFormatType_32BGRA) -> CVPixelBuffer? {
+        // Create a CIContext with hardware acceleration
         let options: [CIContextOption: Any] = [
             .useSoftwareRenderer: false
         ]
         let ciContext = CIContext(options: options)
-        
-        
+
+        // Define the width and height from the CIImage's extent
         let width = Int(self.extent.width)
         let height = Int(self.extent.height)
-        
+
+        // Define pixel buffer attributes
         let pixelBufferAttributes: [String: Any] = [
             kCVPixelBufferCGImageCompatibilityKey as String: true,
             kCVPixelBufferCGBitmapContextCompatibilityKey as String: true,
             kCVPixelBufferMetalCompatibilityKey as String: true,
             kCVPixelBufferWidthKey as String: width,
             kCVPixelBufferHeightKey as String: height,
-            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+            kCVPixelBufferPixelFormatTypeKey as String: pixelFormatType
         ]
-        
+
+        // Create a pixel buffer
         var pixelBuffer: CVPixelBuffer?
         let status = CVPixelBufferCreate(kCFAllocatorDefault,
                                          width,
                                          height,
-                                         kCVPixelFormatType_32BGRA,
+                                         pixelFormatType, // Use the parameter here as well
                                          pixelBufferAttributes as CFDictionary,
                                          &pixelBuffer)
+        
+        // Ensure pixelBuffer was created successfully
         guard status == kCVReturnSuccess, let finalPixelBuffer = pixelBuffer else {
             return nil
         }
-        
+
+        // Render the CIImage to the pixel buffer
         ciContext.render(self, to: finalPixelBuffer)
-        
+
         return finalPixelBuffer
     }
     

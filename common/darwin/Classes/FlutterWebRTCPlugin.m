@@ -311,8 +311,6 @@ bypassVoiceProcessing:(BOOL)bypassVoiceProcessing {
     NSString* peerConnectionId = [[NSUUID UUID] UUIDString];
     peerConnection.flutterId = peerConnectionId;
 
-    sharedPeerConnectionId = peerConnectionId;
-
     /*Create Event Channel.*/
     peerConnection.eventChannel = [FlutterEventChannel
         eventChannelWithName:[NSString stringWithFormat:@"FlutterWebRTC/peerConnectionEvent%@",
