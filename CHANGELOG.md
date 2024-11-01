@@ -1,35 +1,9 @@
 # Changelog
 
 --------------------------------------------
-<<<<<<< HEAD
-[0.11.2+7] - 2024-10-12
+[0.12.1+1] - 2024-11-01
 
-* [Fix] release buffer after convert result GPUPixel on macOS
-
-[0.11.2+6] - 2024-09-10
-
-* [Chore] Upgrade dart_webrtc_plus support web: ^1.0.0
-
-[0.11.2+5] - 2024-08-29
-
-* [Docs] Update setup beauty filters for Android
-
-[0.11.2+4] - 2024-08-27
-
-* [All] Upgrade KaiRTC to 128.6613.02
-  
-[0.11.2+3] - 2024-08-24
-
-* [All] Upgrade KaiRTC to 128.6613.01
-
-[0.11.2+2] - 2024-07-30
-
-* [Web] Upgrade dart_webrtc for support compile wasm
-
-[0.11.2+1] - 2024-07-11
-
-* [Android] Improve performance when convert Bitmap to VideoFrame
-=======
+* [Darwin] Convert PixelBuffer in RTCVideoFrame to kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
 
 [0.12.1+hotfix.1] - 2024-10-25
 
@@ -76,7 +50,34 @@
 [0.11.3] - 2024-07-12
 
 * Bump version for libwebrtc.
->>>>>>> 3d54c1af23efb7e5394c55acc6366ca0041ce0b4
+
+[0.11.2+7] - 2024-10-12
+
+* [Fix] release buffer after convert result GPUPixel on macOS
+
+[0.11.2+6] - 2024-09-10
+
+* [Chore] Upgrade dart_webrtc_plus support web: ^1.0.0
+
+[0.11.2+5] - 2024-08-29
+
+* [Docs] Update setup beauty filters for Android
+
+[0.11.2+4] - 2024-08-27
+
+* [All] Upgrade KaiRTC to 128.6613.02
+  
+[0.11.2+3] - 2024-08-24
+
+* [All] Upgrade KaiRTC to 128.6613.01
+
+[0.11.2+2] - 2024-07-30
+
+* [Web] Upgrade dart_webrtc for support compile wasm
+
+[0.11.2+1] - 2024-07-11
+
+* [Android] Improve performance when convert Bitmap to VideoFrame
 
 [0.11.2] - 2024-07-09
 
