@@ -4,7 +4,7 @@
 #define DEFAULT_HEIGHT 720
 #define DEFAULT_FPS 30
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 FlutterMediaStream::FlutterMediaStream(FlutterWebRTCBase* base) : base_(base) {
   base_->audio_device_->OnDeviceChange([&] {
@@ -288,7 +288,6 @@ void FlutterMediaStream::GetUserVideo(const EncodableMap& constraints,
   if (!video_capturer.get())
     return;
 
-  
   video_capturer->StartCapture();
 
   const char* video_source_label = "video_input";
@@ -538,18 +537,18 @@ void FlutterMediaStream::MediaStreamTrackDispose(
       if (track->id().std_string() == track_id) {
         stream->RemoveTrack(track);
 
-      if (base_->video_capturers_.find(track_id) !=
-        base_->video_capturers_.end()) {
-        auto video_capture = base_->video_capturers_[track_id];
-        if (video_capture->CaptureStarted()) {
-          video_capture->StopCapture();
+        if (base_->video_capturers_.find(track_id) !=
+            base_->video_capturers_.end()) {
+          auto video_capture = base_->video_capturers_[track_id];
+          if (video_capture->CaptureStarted()) {
+            video_capture->StopCapture();
+          }
+          base_->video_capturers_.erase(track_id);
         }
-        base_->video_capturers_.erase(track_id);
-       }
       }
     }
   }
   base_->RemoveMediaTrackForId(track_id);
   result->Success();
 }
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin

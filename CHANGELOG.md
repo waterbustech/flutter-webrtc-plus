@@ -1,6 +1,56 @@
 # Changelog
 
 --------------------------------------------
+[0.12.1+1] - 2024-11-01
+
+* [Darwin] Convert PixelBuffer in RTCVideoFrame to kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+
+[0.12.1+hotfix.1] - 2024-10-25
+
+* [iOS] fix: fix switch camera broken on iOS.
+
+* [web] fix: add stub WebRTC.initialize for web.
+* [Docs] Fixing proguard rules link (#1686)
+* [iOS/Android] feat: support unprocessed audio (#825)
+* [eLinux] feat: add support for eLinux (#1338)
+
+[0.12.0+hotfix.1] - 2024-10-18
+
+* [macOS] fix compilation error for macOS.
+
+[0.12.0] - 2024-10-16
+
+* [iOS/macOS] Fix memory leak for iOS/macOS.
+* [iOS] Support MultiCam Session for iOS.
+
+[0.11.7] - 2024-09-04
+
+* [Web] Bump dart_webrtc to 1.4.9.
+* [Web] Bump web version to 1.0.0.
+
+[0.11.6+hotfix.1] - 2024-08-07
+
+* [iOS] Fixed PlatformView not rendering after resuming from background.
+
+[0.11.6] - 2024-08-02
+
+* [Web] change VideoElement to HTMLVideoElement.
+* [iOS] added shared singleton for FlutterWebRTCPlugin (#1634)
+* [iOS] Using av samplebuffer for PlatformView (#1635)
+
+
+[0.11.5] - 2024-07-23
+
+* [Android] Report actual sizes for camera media stream track (#1636).
+
+[0.11.4] - 2024-07-19
+
+* [Android] fix issue for camera switching.
+
+[0.11.3] - 2024-07-12
+
+* Bump version for libwebrtc.
+
 [0.11.2+7] - 2024-10-12
 
 * [Fix] release buffer after convert result GPUPixel on macOS

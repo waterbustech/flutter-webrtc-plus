@@ -1,6 +1,8 @@
+// Dart imports:
 import 'dart:async';
 import 'dart:typed_data';
 
+// Project imports:
 import '../desktop_capturer.dart';
 import 'event_channel.dart';
 import 'utils.dart';

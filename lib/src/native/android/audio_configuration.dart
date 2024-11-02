@@ -1,3 +1,4 @@
+// Project imports:
 import '../utils.dart';
 
 enum AndroidAudioMode {
@@ -6,10 +7,6 @@ enum AndroidAudioMode {
   inCall,
   inCommunication,
   ringtone,
-}
-
-extension AndroidAudioModeExt on AndroidAudioMode {
-  String get value => name;
 }
 
 extension AndroidAudioModeEnumEx on String {
@@ -22,10 +19,6 @@ enum AndroidAudioFocusMode {
   gainTransient,
   gainTransientExclusive,
   gainTransientMayDuck
-}
-
-extension AndroidAudioFocusModeExt on AndroidAudioFocusMode {
-  String get value => name;
 }
 
 extension AndroidAudioFocusModeEnumEx on String {
@@ -42,10 +35,6 @@ enum AndroidAudioStreamType {
   ring,
   system,
   voiceCall
-}
-
-extension AndroidAudioStreamTypeExt on AndroidAudioStreamType {
-  String get value => name;
 }
 
 extension AndroidAudioStreamTypeEnumEx on String {
@@ -69,11 +58,6 @@ enum AndroidAudioAttributesUsageType {
   voiceCommunicationSignalling
 }
 
-extension AndroidAudioAttributesUsageTypeExt
-    on AndroidAudioAttributesUsageType {
-  String get value => name;
-}
-
 extension AndroidAudioAttributesUsageTypeEnumEx on String {
   AndroidAudioAttributesUsageType toAndroidAudioAttributesUsageType() =>
       AndroidAudioAttributesUsageType.values
@@ -86,11 +70,6 @@ enum AndroidAudioAttributesContentType {
   sonification,
   speech,
   unknown
-}
-
-extension AndroidAudioAttributesContentTypeExt
-    on AndroidAudioAttributesContentType {
-  String get value => name;
 }
 
 extension AndroidAudioAttributesContentTypeEnumEx on String {
@@ -129,17 +108,17 @@ class AndroidAudioConfiguration {
   Map<String, dynamic> toMap() => <String, dynamic>{
         if (manageAudioFocus != null) 'manageAudioFocus': manageAudioFocus!,
         if (androidAudioMode != null)
-          'androidAudioMode': androidAudioMode!.value,
+          'androidAudioMode': androidAudioMode!.name,
         if (androidAudioFocusMode != null)
-          'androidAudioFocusMode': androidAudioFocusMode!.value,
+          'androidAudioFocusMode': androidAudioFocusMode!.name,
         if (androidAudioStreamType != null)
-          'androidAudioStreamType': androidAudioStreamType!.value,
+          'androidAudioStreamType': androidAudioStreamType!.name,
         if (androidAudioAttributesUsageType != null)
           'androidAudioAttributesUsageType':
-              androidAudioAttributesUsageType!.value,
+              androidAudioAttributesUsageType!.name,
         if (androidAudioAttributesContentType != null)
           'androidAudioAttributesContentType':
-              androidAudioAttributesContentType!.value,
+              androidAudioAttributesContentType!.name,
         if (forceHandleAudioRouting != null)
           'forceHandleAudioRouting': forceHandleAudioRouting!,
       };

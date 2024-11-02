@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
+import android.media.MediaRecorder;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceInfo;
 import android.os.Build;
@@ -147,7 +148,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     }
     mPeerConnectionObservers.clear();
   }
-  private void initialize(int networkIgnoreMask, boolean forceSWCodec, List<String> forceSWCodecList,
+  private void initialize(boolean bypassVoiceProcessing, int networkIgnoreMask, boolean forceSWCodec, List<String> forceSWCodecList,
   @Nullable ConstraintsMap androidAudioConfiguration) {
     if (mFactory != null) {
       return;
@@ -182,12 +183,20 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
                   .build();
       }
     }
+    JavaAudioDeviceModule.Builder audioDeviceModuleBuilder = JavaAudioDeviceModule.builder(context);
 
-    JavaAudioDeviceModule.Builder audioDeviceModuleBuilder = JavaAudioDeviceModule.builder(context)
-            .setUseHardwareAcousticEchoCanceler(true)
-            .setUseHardwareNoiseSuppressor(true)
-            .setSamplesReadyCallback(getUserMediaImpl.inputSamplesInterceptor);
-
+    if(bypassVoiceProcessing) {
+      audioDeviceModuleBuilder.setUseHardwareAcousticEchoCanceler(false)
+                        .setUseHardwareNoiseSuppressor(false)
+                        .setUseStereoInput(true)
+                        .setUseStereoOutput(true)
+                        .setAudioSource(MediaRecorder.AudioSource.MIC);
+    } else {
+      audioDeviceModuleBuilder.setUseHardwareAcousticEchoCanceler(true)
+                        .setUseHardwareNoiseSuppressor(true)
+                        .setSamplesReadyCallback(getUserMediaImpl.inputSamplesInterceptor);
+    }
+    
     if (audioAttributes != null) {
       audioDeviceModuleBuilder.setAudioAttributes(audioAttributes);
     }
@@ -283,8 +292,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
                 && constraintsMap.getType("androidAudioConfiguration") == ObjectType.Map) {
             androidAudioConfiguration = constraintsMap.getMap("androidAudioConfiguration");
         }
-
-        initialize(networkIgnoreMask, forceSWCodec, forceSWCodecList, androidAudioConfiguration);
+        boolean enableBypassVoiceProcessing = false;
+        if(options.get("bypassVoiceProcessing") != null) {
+          enableBypassVoiceProcessing = (boolean)options.get("bypassVoiceProcessing");
+        }
+        initialize(enableBypassVoiceProcessing, networkIgnoreMask, forceSWCodec, forceSWCodecList, androidAudioConfiguration);
         result.success(null);
         break;
       }
@@ -1545,7 +1557,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     removeTrackForRendererById(trackId);
     track.setEnabled(false);
     if (track.kind().equals("video")) {
-      getUserMediaImpl.removeVideoCapturer(trackId);
+      getUserMediaImpl.removeVideoCapturerSync(trackId);
     }
     localTracks.remove(trackId);
   }
@@ -1639,7 +1651,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
       stream.removeTrack((AudioTrack) track);
     } else if (track.kind().equals("video")) {
       stream.removeTrack((VideoTrack) track);
-      getUserMediaImpl.removeVideoCapturer(_trackId);
+      getUserMediaImpl.removeVideoCapturerSync(_trackId);
     }
   }
 
@@ -1937,7 +1949,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
     List<VideoTrack> videoTracks = stream.videoTracks;
     for (VideoTrack track : videoTracks) {
       localTracks.remove(track.id());
-      getUserMediaImpl.removeVideoCapturer(track.id());
+      getUserMediaImpl.removeVideoCapturerSync(track.id());
       stream.removeTrack(track);
     }
     List<AudioTrack> audioTracks = stream.audioTracks;

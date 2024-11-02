@@ -1,5 +1,7 @@
+// Dart imports:
 import 'dart:io';
 
+// Flutter imports:
 import 'package:flutter/services.dart';
 
 class WebRTC {
@@ -50,6 +52,8 @@ class WebRTC {
   /// "forceSWCodecList": a list of strings of software codecs that should use software.
   ///
   /// "androidAudioConfiguration": an AndroidAudioConfiguration object mapped with toMap()
+  ///
+  /// "bypassVoiceProcessing": a boolean that bypasses the audio processing for the audio device.
   static Future<void> initialize({Map<String, dynamic>? options}) async {
     if (!initialized) {
       await _channel.invokeMethod<void>('initialize', <String, dynamic>{

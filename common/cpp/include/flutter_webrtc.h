@@ -12,7 +12,7 @@
 
 #include "libwebrtc.h"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 using namespace libwebrtc;
 
@@ -38,6 +38,6 @@ class FlutterWebRTC : public FlutterWebRTCBase,
                         std::unique_ptr<MethodResultProxy> result);
 };
 
-}  // namespace flutter_webrtc_plugin
+}  // namespace flutter_webrtc_plus_plugin
 
 #endif  // PLUGINS_FLUTTER_WEBRTC_HXX

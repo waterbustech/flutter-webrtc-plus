@@ -20,7 +20,7 @@ add_library(${PLUGIN_NAME} SHARED
   "../common/cpp/src/flutter_webrtc.cc"
   "../common/cpp/src/flutter_webrtc_base.cc"
   "../common/cpp/src/flutter_common.cc"
-  "../common/cpp/flutter_webrtc_plugin.cc"
+  "flutter_webrtc_plus_plugin.cc"
   "flutter/core_implementations.cc"
   "flutter/standard_codec.cc"
   "flutter/plugin_registrar.cc"
@@ -40,7 +40,7 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
   CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 target_include_directories(${PLUGIN_NAME} INTERFACE
-"${CMAKE_CURRENT_SOURCE_DIR}/../common/cpp/include")
+"${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::GTK)
 
@@ -50,7 +50,7 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
 )
 
 # List of absolute paths to libraries that should be bundled with the plugin
-set(flutter_webrtc_bundled_libraries
+set(flutter_webrtc_plus_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/lib/${FLUTTER_TARGET_PLATFORM}/libwebrtc.so"
   PARENT_SCOPE
 )

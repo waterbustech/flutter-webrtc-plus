@@ -1,0 +1,36 @@
+PODS:
+  - flutter_webrtc_plus (0.9.36):
+    - FlutterMacOS
+    - KaiRTC (= 128.6613.01)
+  - FlutterMacOS (1.0.0)
+  - KaiRTC (128.6613.01)
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - flutter_webrtc_plus (from `Flutter/ephemeral/.symlinks/plugins/flutter_webrtc_plus/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+
+SPEC REPOS:
+  trunk:
+    - KaiRTC
+
+EXTERNAL SOURCES:
+  flutter_webrtc_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_webrtc_plus/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  path_provider_foundation:
+    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+
+SPEC CHECKSUMS:
+  flutter_webrtc_plus: 76503bd646094762a950983d69c49f8db566cabe
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  KaiRTC: 85d741a5c81058201b44704e821b78228d6eae72
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+
+PODFILE CHECKSUM: cbf4d58c8772a65c3222a68c81d6e854a07d1646
+
+COCOAPODS: 1.15.2

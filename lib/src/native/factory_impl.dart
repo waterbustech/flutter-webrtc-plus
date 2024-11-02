@@ -1,7 +1,10 @@
+// Dart imports:
 import 'dart:async';
 
+// Package imports:
 import 'package:webrtc_interface_plus/webrtc_interface_plus.dart';
 
+// Project imports:
 import '../desktop_capturer.dart';
 import 'desktop_capturer_impl.dart';
 import 'frame_cryptor_impl.dart';

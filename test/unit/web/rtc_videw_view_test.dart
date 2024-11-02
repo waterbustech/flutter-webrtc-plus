@@ -1,7 +1,10 @@
 @TestOn('browser')
+library;
 
+// Package imports:
 import 'package:flutter_test/flutter_test.dart';
 
+// Project imports:
 import 'package:flutter_webrtc_plus/flutter_webrtc_plus.dart';
 
 void main() {

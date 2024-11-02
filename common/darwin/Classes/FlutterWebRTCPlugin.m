@@ -101,21 +101,12 @@ void postEvent(FlutterEventSink _Nonnull sink, id _Nullable event) {
 }
 
 static FlutterWebRTCPlugin *sharedSingleton;
-static NSString *sharedPeerConnectionId;
 
 + (FlutterWebRTCPlugin *)sharedSingleton
 {
   @synchronized(self)
   {
     return sharedSingleton;
-  }
-}
-
-+ (NSString *)sharedPeerConnectionId
-{
-  @synchronized(self)
-  {
-    return sharedPeerConnectionId;
   }
 }
 
@@ -149,8 +140,8 @@ static NSString *sharedPeerConnectionId;
 #endif
                    withTextures:(NSObject<FlutterTextureRegistry>*)textures {
 
-    self = [super init];
-    sharedSingleton = self;
+  self = [super init];
+  sharedSingleton = self;
 
   FlutterEventChannel* eventChannel =
       [FlutterEventChannel eventChannelWithName:@"FlutterWebRTC.Event" binaryMessenger:messenger];
@@ -241,7 +232,8 @@ static NSString *sharedPeerConnectionId;
 #endif
 }
 
-- (void)initialize:(NSArray*)networkIgnoreMask {
+- (void)initialize:(NSArray*)networkIgnoreMask
+bypassVoiceProcessing:(BOOL)bypassVoiceProcessing {
     // RTCSetMinDebugLogLevel(RTCLoggingSeverityVerbose);
     if (!_peerConnectionFactory) {
         VideoDecoderFactory* decoderFactory = [[VideoDecoderFactory alloc] init];
@@ -250,8 +242,17 @@ static NSString *sharedPeerConnectionId;
         VideoEncoderFactorySimulcast* simulcastFactory =
             [[VideoEncoderFactorySimulcast alloc] initWithPrimary:encoderFactory fallback:encoderFactory];
 
-        _peerConnectionFactory = [[RTCPeerConnectionFactory alloc] initWithEncoderFactory:simulcastFactory
-                                                                           decoderFactory:decoderFactory];
+        if (bypassVoiceProcessing) {
+          _peerConnectionFactory =
+              [[RTCPeerConnectionFactory alloc] initWithBypassVoiceProcessing:YES
+                                                               encoderFactory:simulcastFactory
+                                                               decoderFactory:decoderFactory
+                                                        audioProcessingModule:nil];
+        } else {
+          _peerConnectionFactory =
+              [[RTCPeerConnectionFactory alloc] initWithEncoderFactory:simulcastFactory
+                                                        decoderFactory:decoderFactory];
+        }
 
         RTCPeerConnectionFactoryOptions *options = [[RTCPeerConnectionFactoryOptions alloc] init];
         for (NSString* adapter in networkIgnoreMask)
@@ -283,11 +284,15 @@ static NSString *sharedPeerConnectionId;
   if ([@"initialize" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
     NSDictionary* options = argsMap[@"options"];
+    BOOL enableBypassVoiceProcessing = NO;
+    if(options[@"bypassVoiceProcessing"] != nil){
+        enableBypassVoiceProcessing = ((NSNumber*)options[@"bypassVoiceProcessing"]).boolValue;
+    }
     NSArray* networkIgnoreMask = [NSArray new];
     if (options[@"networkIgnoreMask"] != nil) {
       networkIgnoreMask = ((NSArray*)options[@"networkIgnoreMask"]);
     }
-    [self initialize:networkIgnoreMask];
+    [self initialize:networkIgnoreMask bypassVoiceProcessing:enableBypassVoiceProcessing];
     result(@"");
   } else if ([@"createPeerConnection" isEqualToString:call.method]) {
     NSDictionary* argsMap = call.arguments;
@@ -305,8 +310,6 @@ static NSString *sharedPeerConnectionId;
 
     NSString* peerConnectionId = [[NSUUID UUID] UUIDString];
     peerConnection.flutterId = peerConnectionId;
-
-    sharedPeerConnectionId = peerConnectionId;
 
     /*Create Event Channel.*/
     peerConnection.eventChannel = [FlutterEventChannel
@@ -581,6 +584,7 @@ static NSString *sharedPeerConnectionId;
           shouldCallResult = NO;
           stopHandler(^{
             NSLog(@"video capturer stopped, trackID = %@", videoTrack.trackId);
+            self.videoCapturer = nil;
             result(nil);
           });
           [self.videoCapturerStopHandlers removeObjectForKey:videoTrack.trackId];
@@ -811,13 +815,6 @@ static NSString *sharedPeerConnectionId;
         }
       }
       render.videoTrack = videoTrack;
-      result(nil);
-  } else if([@"videoPlatformViewRendererSetObjectFit" isEqualToString:call.method]){
-      NSDictionary* argsMap = call.arguments;
-      NSNumber* viewId = argsMap[@"viewId"];
-      NSNumber* fit = argsMap[@"objectFit"];
-      FlutterRTCVideoPlatformViewController* render = _platformViewFactory.renders[viewId];
-      [render setObjectFit:fit];
       result(nil);
   } else if ([@"videoPlatformViewRendererDispose" isEqualToString:call.method]) {
       NSDictionary* argsMap = call.arguments;
