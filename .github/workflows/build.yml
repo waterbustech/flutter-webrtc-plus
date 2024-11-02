@@ -27,7 +27,7 @@ jobs:
       - name: Dart Format Check
         run: dart format lib/ test/ --set-exit-if-changed
       - name: Import Sorter Check
-        run: flutter pub run import_sorter:main --no-comments --exit-if-changed
+        run: dart run import_sorter:main --no-comments --exit-if-changed
       - name: Dart Analyze Check
         run: flutter analyze
       - name: Dart Test Check
@@ -83,11 +83,12 @@ jobs:
         run: flutter build windows --release
 
   build-for-macos:
-    name: Build for flutter macOS
-    runs-on: macos-latest
-
+    name: Build for Flutter macOS (arm64)
+    runs-on: macos-14
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - name: Select Xcode 14.3.1
+        run: sudo xcode-select --switch /Applications/Xcode_14.3.1.app/Contents/Developer
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
