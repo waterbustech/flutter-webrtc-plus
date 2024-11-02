@@ -22,6 +22,14 @@ class FlutterRTCBeautyFilters(context: Context) {
     private var lipstickFilter: LipstickFilter? = null
     private var resultCallback: ProcessedFrameDataCallback? = null
 
+    companion object {
+        private var isInitialized: Boolean = false
+
+        fun initialize() {
+            isInitialized = true
+        }
+    }
+
     init {
         try {
             beautyFaceFilter = BeautyFaceFilter()
@@ -66,11 +74,15 @@ class FlutterRTCBeautyFilters(context: Context) {
 
         val bitmap = rotateBitmap(originalBitmap, -90f)
 
-        val width: Int = bitmap.width
-        val height: Int = bitmap.height
+        if (isInitialized) {
+            val width: Int = bitmap.width
+            val height: Int = bitmap.height
 
-        val pixels = getPixelsFromBitmap(bitmap)
-        sourceRawInput?.setFrameByBuffer(pixels, width, height)
+            val pixels = getPixelsFromBitmap(bitmap)
+            sourceRawInput?.setFrameByBuffer(pixels, width, height)
+        } else {
+            this.resultCallback?.onResult(bitmap)
+        }
     }
 
     private fun getPixelsFromBitmap(bitmap: Bitmap): ByteBuffer {

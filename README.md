@@ -426,7 +426,9 @@ class MainActivity: AppCompatActivity()  {
         flutterView.attachToFlutterEngine(engine)
         flutterViewEngine.attachFlutterView(flutterView)
 
+        // Config for Beauty Filters feature
         GPUPixel.setContext(applicationContext)
+        FlutterRTCBeautyFilters.initialize()
     }
 
     override fun onDestroy() {
