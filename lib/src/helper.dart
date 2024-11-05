@@ -241,6 +241,10 @@ class Helper {
   }
 
   static bool get platformSupportGPUPixel =>
-      Platform.isIOS || Platform.isMacOS || Platform.isAndroid;
+      Platform.isIOS ||
+      Platform.isMacOS ||
+      Platform.isAndroid ||
+      Platform.isLinux;
+
   static bool get platformIsDarwin => Platform.isIOS || Platform.isMacOS;
 }

@@ -65,3 +65,8 @@ macos/*.framework
 ios/gpupixel-ios-1.2.5
 ios/*.zip
 ios/*.framework
+
+src/resources
+src/third_party
+third_party/gpupixel
+output/
