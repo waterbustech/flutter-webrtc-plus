@@ -66,7 +66,5 @@ ios/gpupixel-ios-1.2.5
 ios/*.zip
 ios/*.framework
 
-src/resources
-src/third_party
-third_party/gpupixel
-output/
+third_party/libwebrtc/lib/elinux-arm64
+third_party/libwebrtc/lib/elinux-x64
