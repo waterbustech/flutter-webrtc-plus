@@ -2,6 +2,9 @@
 #include <cstring>
 #include "flutter_virtual_background.h"
 #include "gpupixel.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 
 namespace flutter_webrtc_plus_plugin {
 
@@ -99,27 +102,27 @@ void FlutterVirtualBackground::OnFrame(scoped_refptr<RTCVideoFrame> frame) {
 }
 
 void FlutterVirtualBackground::SetThinFaceValue(const double value) {
-    face_reshape_filter_->setFaceSlimLevel(value);
+    face_reshape_filter_->setFaceSlimLevel(static_cast<float>(value));
 }
 
 void FlutterVirtualBackground::SetWhiteValue(const double value) {
-    beauty_face_filter_->setWhite(value);
+    beauty_face_filter_->setWhite(static_cast<float>(value));
 }
 
 void FlutterVirtualBackground::SetBigEyeValue(const double value) {
-    face_reshape_filter_->setEyeZoomLevel(value);
+    face_reshape_filter_->setEyeZoomLevel(static_cast<float>(value));
 }
 
 void FlutterVirtualBackground::SetSmoothValue(const double value) {
-    beauty_face_filter_->setBlurAlpha(value);
+    beauty_face_filter_->setBlurAlpha(static_cast<float>(value));
 }
 
 void FlutterVirtualBackground::SetLipstickValue(const double value) {
-    lipstick_filter_->setBlendLevel(value);
+    lipstick_filter_->setBlendLevel(static_cast<float>(value));
 }
 
 void FlutterVirtualBackground::SetBlusherValue(const double value) {
-    blusher_filter_->setBlendLevel(value);
+    blusher_filter_->setBlendLevel(static_cast<float>(value));
 }
 
 
