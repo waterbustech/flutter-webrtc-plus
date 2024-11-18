@@ -1241,7 +1241,9 @@ void FlutterWebRTC::HandleMethodCall(
     state[EncodableValue("state")] =
         peerConnectionStateString(pc->peer_connection_state());
     result->Success(EncodableValue(state));
-  } else if (method_call.method_name().compare("setThinValue") == 0) {
+  }
+  #if !defined(_WIN32) 
+  else if (method_call.method_name().compare("setThinValue") == 0) {
     if (!method_call.arguments()) {
       result->Error("Bad Arguments", "Null constraints arguments received");
       return;
@@ -1301,7 +1303,9 @@ void FlutterWebRTC::HandleMethodCall(
     const double value = findDouble(params, "value");
     SetWhiteValue(value);
     result->Success();
-  } else {
+  }
+  #endif 
+  else {
     if (HandleFrameCryptorMethodCall(method_call, std::move(result), &result)) {
       return;
     } else {

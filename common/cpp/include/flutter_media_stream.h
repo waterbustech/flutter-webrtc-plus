@@ -3,7 +3,10 @@
 
 #include "flutter_common.h"
 #include "flutter_webrtc_base.h"
+
+#if !defined(_WIN32)
 #include "flutter_virtual_background.h" 
+#endif
 
 namespace flutter_webrtc_plus_plugin {
 
@@ -49,6 +52,8 @@ class FlutterMediaStream {
 
   void OnDeviceChange();
 
+  #if !defined(_WIN32)
+
   // MARK: GPUPixel Adjusting face value
   void SetThinFaceValue(const double value);
 
@@ -62,9 +67,14 @@ class FlutterMediaStream {
 
   void SetBlusherValue(const double value);
 
+  #endif
+
  private:
   FlutterWebRTCBase* base_;
+
+  #if !defined(_WIN32)
   std::shared_ptr<FlutterVirtualBackground> virtualBackgroundProcessor_;
+  #endif
 };
 
 }  // namespace flutter_webrtc_plus_plugin
