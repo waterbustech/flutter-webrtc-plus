@@ -4,15 +4,17 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 
 # This value is used when generating builds using this plugin, so it must not be changed
 set(PLUGIN_NAME "flutter_webrtc_plus_plugin")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 17)
 
 # Define necessary flags and settings
 add_definitions(-DLIB_WEBRTC_API_DLL)
 add_definitions(-DRTC_DESKTOP_DEVICE)
-
+add_definitions(-DGPUPIXEL_EXPORTS)
 
 # Link directories for additional libraries
 LINK_DIRECTORIES( 
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glfw/lib-vc2022
+  ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glfw/lib-vc2022
   ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/lib/windows
 )
 
@@ -44,9 +46,9 @@ include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/svpng"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/include"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glfw/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glad/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/stb"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glfw/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/stb"
 )
 
 # Include directories for dependencies
@@ -57,16 +59,16 @@ target_include_directories(${PLUGIN_NAME} PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/svpng"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/include"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glfw/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glad/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glfw/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/include"
 )
 
 # Link gpupixel and OpenGL libraries
 target_link_libraries(${PLUGIN_NAME} PRIVATE 
       glad
+      glfw3
       gpupixel
-      opengl32
-      glfw3)
+      opengl32)
 
 # Apply standard settings
 apply_standard_settings(${PLUGIN_NAME})
@@ -85,9 +87,9 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
 target_link_libraries(${PLUGIN_NAME} PRIVATE
   flutter
   flutter_wrapper_plugin
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_kit.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_face.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_core.lib"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_kit.lib"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_face.lib"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_core.lib"
 )
 
 # Add flags to ensure all libraries are linked
@@ -96,22 +98,15 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-as-needed")
 # Set the list of DLLs to be bundled with the plugin
 set(flutter_webrtc_plus_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/lib/win64/libwebrtc.dll"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glfw/lib-vc2022/glfw3.dll"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_kit.dll"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_face.dll"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_core.dll"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_kit.lib"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_face.lib"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/windows/x64/vnn_core.lib"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/lib/windows/gpupixel.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glfw/lib-vc2022/glfw3.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_kit.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_face.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_core.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_kit.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_face.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/windows/x64/vnn_core.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/models/vnn_face278_data/face_pc.vnnmodel"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/blusher.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/lookup_custom.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/lookup_gray.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/lookup_light.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/lookup_origin.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/lookup_skin.png"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources/mouth.png"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/res"
   PARENT_SCOPE
 )
 
@@ -122,9 +117,6 @@ else()
   set_property(TARGET ${PLUGIN_NAME} PROPERTY BUILD_RPATH "$ORIGIN")
 endif()
 
-
-# Fix warnings related to shared_ptr and DLL interface
 target_compile_options(${PLUGIN_NAME} PRIVATE 
   "/wd4251"  # Disable specific warning about shared_ptr
-  "/EHsc"  # Ensure exception handling model is set
 )

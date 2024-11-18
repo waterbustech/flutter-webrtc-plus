@@ -37,9 +37,9 @@ include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/include"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/svpng"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glfw/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/stb"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/glad/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glfw/include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/stb"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/include"
 )
 
 # Standard settings
@@ -67,9 +67,9 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
 
 # Link vnn libraries
 target_link_libraries(${PLUGIN_NAME} PRIVATE 
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/linux/libvnn_kit.so"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/linux/libvnn_face.so"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/linux/libvnn_core.so"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/linux/libvnn_kit.so"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/linux/libvnn_face.so"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/linux/libvnn_core.so"
 )
 
 # Add flags to ensure all libraries are linked
@@ -79,14 +79,13 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-as-needed")
 set(flutter_webrtc_plus_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/lib/${FLUTTER_TARGET_PLATFORM}/libwebrtc.so"
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/lib/linux/libgpupixel.so"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/linux/libvnn_kit.so"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/linux/libvnn_face.so"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/libs/linux/libvnn_core.so"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/linux/libvnn_kit.so"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/linux/libvnn_face.so"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/vnn/libs/linux/libvnn_core.so"
   PARENT_SCOPE
 )
 
-set(RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../src/resources")
-set(VNN_FACE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../src/third_party/vnn/models/vnn_face278_data/face_pc[1.0.0].vnnmodel")
+set(RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/res")
 
 set(BUILD_OUTPUT_DIR "${CMAKE_BINARY_DIR}/res")
 
@@ -98,12 +97,4 @@ add_custom_command(
         ${RESOURCES_DIR}
         ${BUILD_OUTPUT_DIR}
     COMMENT "Copying resources from src/resources to resources directory"
-)
-
-add_custom_command(
-    TARGET ${PLUGIN_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${VNN_FACE_DIR}
-        ${BUILD_OUTPUT_DIR}
-    COMMENT "Copying VNN face model to resources directory"
 )
