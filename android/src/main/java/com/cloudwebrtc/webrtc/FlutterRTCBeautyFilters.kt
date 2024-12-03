@@ -69,10 +69,12 @@ class FlutterRTCBeautyFilters(context: Context) {
         return bmp
     }
 
-    fun processBitmap(originalBitmap: Bitmap) {
+    fun processBitmap(originalBitmap: Bitmap, rotation: Int) {
         if (sourceRawInput == null) return
 
-        val bitmap = rotateBitmap(originalBitmap, -90f)
+        val bitmapRotation = if (rotation == 90) 90f else -90f
+
+        val bitmap = rotateBitmap(originalBitmap, bitmapRotation)
 
         if (isInitialized) {
             val width: Int = bitmap.width

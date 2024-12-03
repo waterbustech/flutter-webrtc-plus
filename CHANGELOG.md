@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.12.1+2] - 2024-12-03
+
+* [Android] Fix camera rotation
+
 [0.12.1+1] - 2024-11-01
 
 * [Darwin] Convert PixelBuffer in RTCVideoFrame to kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
