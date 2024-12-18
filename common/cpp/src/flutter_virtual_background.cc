@@ -75,6 +75,7 @@ void FlutterVirtualBackground::InitGPUPixel() {
 }
 
 void FlutterVirtualBackground::OnFrame(scoped_refptr<RTCVideoFrame> frame) {
+#if !defined(_WIN32)
   if (!frame) {
     std::cerr << "Received null frame in OnFrame." << std::endl;
     return;
@@ -110,6 +111,7 @@ void FlutterVirtualBackground::OnFrame(scoped_refptr<RTCVideoFrame> frame) {
   // Upload frame data to GPUPixel
   gpuPixelRawInput->uploadBytes(width, height, data_y, stride_y, data_u,
                                 stride_u, data_v, stride_v);
+#endif
 }
 
 void FlutterVirtualBackground::SetThinFaceValue(const double value) {

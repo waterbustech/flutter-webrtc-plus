@@ -51,24 +51,13 @@ include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/stb"
 )
 
-# Include directories for dependencies
-target_include_directories(${PLUGIN_NAME} PRIVATE
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../common/cpp/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/uuidxx"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/svpng"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/libwebrtc/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/gpupixel/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glfw/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glad/include"
-)
-
 # Link gpupixel and OpenGL libraries
-target_link_libraries(${PLUGIN_NAME} PRIVATE 
-      glad
-      glfw3
+target_link_libraries(${PLUGIN_NAME} PRIVATE
       gpupixel
-      opengl32)
+      opengl32
+      glfw3
+      glad
+      )
 
 # Apply standard settings
 apply_standard_settings(${PLUGIN_NAME})

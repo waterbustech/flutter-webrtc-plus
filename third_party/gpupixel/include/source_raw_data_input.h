@@ -15,11 +15,11 @@ class GPUPIXEL_API SourceRawDataInput : public Filter {
  public:
   ~SourceRawDataInput();
   static std::shared_ptr<SourceRawDataInput> create();
-  void uploadBytes(const uint8_t* pixels,
-                   int width,
-                   int height,
-                   int stride,
-                   int64_t ts = 0);
+  // void uploadBytes(const uint8_t* pixels,
+  //                  int width,
+  //                  int height,
+  //                  int stride,
+  //                  int64_t ts = 0);
   void uploadBytes(int width,
                    int height,
                    const uint8_t* dataY,
