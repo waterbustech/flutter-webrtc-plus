@@ -1,0 +1,10 @@
+android/src/main/assets/selfie_multiclass.tflite
+macos/gpupixel-macos-1.2.5
+macos/*.zip
+macos/*.framework
+
+ios/gpupixel-ios-1.2.5
+ios/*.zip
+ios/*.framework
+
+third_party/libwebrtc/lib/elinux-x64

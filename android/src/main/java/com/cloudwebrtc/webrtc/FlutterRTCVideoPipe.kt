@@ -172,7 +172,7 @@ class FlutterRTCVideoPipe {
                         // Otherwise, perform segmentation on the captured frame and replace the background
                         val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
                         if (inputFrameBitmap != null) {
-                            beautyFilters?.processBitmap(inputFrameBitmap)
+                            beautyFilters?.processBitmap(inputFrameBitmap, frame.rotation)
                         } else {
                             Log.d(tag, "Convert video frame to bitmap failure")
                         }
