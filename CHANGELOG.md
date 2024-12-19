@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.12.1+3] - 2024-12-19
+
+* [Linux] Implement GPUPixel
+
 [0.12.1+2] - 2024-12-03
 
 * [Android] Fix camera rotation
