@@ -8,3 +8,8 @@ ios/*.zip
 ios/*.framework
 
 third_party/libwebrtc/lib/elinux-x64
+third_party/libwebrtc/lib/elinux-arm64
+third_party/libwebrtc/lib/linux-x64
+third_party/gpupixel/res
+third_party/gpupixel/lib/windows/gpupixel.exp
+third_party/vnn/libs/windows/x86
