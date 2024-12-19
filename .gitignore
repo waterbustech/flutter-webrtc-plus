@@ -65,3 +65,6 @@ macos/*.framework
 ios/gpupixel-ios-1.2.5
 ios/*.zip
 ios/*.framework
+
+third_party/libwebrtc/lib/elinux-arm64
+third_party/libwebrtc/lib/elinux-x64

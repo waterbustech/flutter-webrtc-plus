@@ -1241,6 +1241,66 @@ void FlutterWebRTC::HandleMethodCall(
     state[EncodableValue("state")] =
         peerConnectionStateString(pc->peer_connection_state());
     result->Success(EncodableValue(state));
+  } else if (method_call.method_name().compare("setThinValue") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null constraints arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const double value = findDouble(params, "value");
+    SetThinFaceValue(value);
+    result->Success();
+  } else if (method_call.method_name().compare("setBigEyeValue") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null constraints arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const double value = findDouble(params, "value");
+    SetBigEyeValue(value);
+    result->Success();
+  } else if (method_call.method_name().compare("setSmoothValue") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null constraints arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const double value = findDouble(params, "value");
+    SetSmoothValue(value);
+    result->Success();
+  } else if (method_call.method_name().compare("setLipstickValue") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null constraints arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const double value = findDouble(params, "value");
+    SetLipstickValue(value);
+    result->Success();
+  } else if (method_call.method_name().compare("setBlusherValue") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null constraints arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const double value = findDouble(params, "value");
+    SetBlusherValue(value);
+    result->Success();
+  } else if (method_call.method_name().compare("setWhiteValue") == 0) {
+    if (!method_call.arguments()) {
+      result->Error("Bad Arguments", "Null constraints arguments received");
+      return;
+    }
+    const EncodableMap params =
+        GetValue<EncodableMap>(*method_call.arguments());
+    const double value = findDouble(params, "value");
+    SetWhiteValue(value);
+    result->Success();
   } else {
     if (HandleFrameCryptorMethodCall(method_call, std::move(result), &result)) {
       return;

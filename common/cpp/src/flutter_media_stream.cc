@@ -1,4 +1,5 @@
 #include "flutter_media_stream.h"
+#include "flutter_virtual_background.h"
 
 #define DEFAULT_WIDTH 1280
 #define DEFAULT_HEIGHT 720
@@ -299,6 +300,13 @@ void FlutterMediaStream::GetUserVideo(const EncodableMap& constraints,
   scoped_refptr<RTCVideoTrack> track =
       base_->factory_->CreateVideoTrack(source, uuid.c_str());
 
+  virtualBackgroundProcessor_ = std::make_shared<FlutterVirtualBackground>(track.get());
+
+  std::cout << "Virtual background processor created." << std::endl;
+
+  track->AddRenderer(virtualBackgroundProcessor_.get());
+  std::cout << "Renderer added to track." << std::endl;
+
   EncodableList videoTracks;
   EncodableMap info;
   info[EncodableValue("id")] = EncodableValue(track->id().std_string());
@@ -551,4 +559,30 @@ void FlutterMediaStream::MediaStreamTrackDispose(
   base_->RemoveMediaTrackForId(track_id);
   result->Success();
 }
+
+// MARK: GPUPixel Adjusting face value
+void FlutterMediaStream::SetThinFaceValue(const double value) {
+  virtualBackgroundProcessor_->SetThinFaceValue(value);
+}
+  
+void FlutterMediaStream::SetWhiteValue(const double value) {
+  virtualBackgroundProcessor_->SetWhiteValue(value);
+}
+  
+void FlutterMediaStream::SetBigEyeValue(const double value) {
+  virtualBackgroundProcessor_->SetBigEyeValue(value);
+}
+  
+void FlutterMediaStream::SetSmoothValue(const double value) {
+  virtualBackgroundProcessor_->SetSmoothValue(value);
+}
+  
+void FlutterMediaStream::SetLipstickValue(const double value) {
+  virtualBackgroundProcessor_->SetLipstickValue(value);
+}
+  
+void FlutterMediaStream::SetBlusherValue(const double value) {
+  virtualBackgroundProcessor_->SetBlusherValue(value);
+}
+  
 }  // namespace flutter_webrtc_plus_plugin
