@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.12.1+4] - 2024-12-30
+
+* fix compiler errors.
+
 [0.12.1+3] - 2024-12-19
 
 * [Linux] Implement GPUPixel
