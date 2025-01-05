@@ -19,6 +19,7 @@ var maskRequest: VNGeneratePersonInstanceMaskRequest?
     
     public override init() {
         if #available(iOS 17.0, macOS 14.0, *) {
+            print("init virtual background")
             DispatchQueue.main.async {
                 maskRequest = VNGeneratePersonInstanceMaskRequest()
                 maskRequest?.preferBackgroundProcessing = true

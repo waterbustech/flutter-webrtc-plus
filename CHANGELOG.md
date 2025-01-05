@@ -1,6 +1,14 @@
 # Changelog
 
 --------------------------------------------
+[0.12.1+5] - 2024-12-31
+
+* [Darwin] warm-up virtual background.
+
+[0.12.1+5] - 2024-12-31
+
+* fix getStats errors.
+
 [0.12.1+4] - 2024-12-30
 
 * fix compiler errors.

@@ -12,10 +12,10 @@ import WebRTC
     var beautyFilter: RTCBeautyFilter?
     var beautyFilterDelegate: BeautyFilterDelegate?
     
-    @objc public init(videoSource: RTCVideoSource) {
+    @objc public init(videoSource: RTCVideoSource, virtualBackground: RTCVirtualBackground) {
         super.init()
-        
-        self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource)
+        print("init BeautyFilterDelegate with virtualBackground: \(virtualBackground == nil)")
+        self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource, virtualBackground: virtualBackground)
         self.beautyFilter = RTCBeautyFilter(delegate: self.beautyFilterDelegate)
     }
     
@@ -97,9 +97,9 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     var rotate: RTCVideoRotation = RTCVideoRotation._180
     weak var rtcVideoCapturer: RTCVideoCapturer?
     
-    init(videoSource: RTCVideoSource? = nil) {
+    init(videoSource: RTCVideoSource? = nil, virtualBackground: RTCVirtualBackground) {
         self.videoSource = videoSource
-        self.virtualBackground = RTCVirtualBackground()
+        self.virtualBackground = virtualBackground
     }
     
     deinit {
