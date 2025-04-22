@@ -1,6 +1,10 @@
 # Changelog
 
 --------------------------------------------
+[0.12.1+7] - 2025-04-22
+
+* [Darwin] update WebRTC SDK
+
 [0.12.1+5] - 2024-12-31
 
 * [Darwin] warm-up virtual background.
