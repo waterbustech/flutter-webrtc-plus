@@ -1,33 +1,39 @@
-// Dart imports:
-import 'dart:io';
-
 // Flutter imports:
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:universal_io/io.dart';
 
 class WebRTC {
   static const MethodChannel _channel = MethodChannel('FlutterWebRTC.Method');
 
-  static bool get platformIsDesktop =>
-      Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+  static bool get platformIsDesktop {
+    if (kIsWeb) return false;
 
-  static bool get platformIsWindows => Platform.isWindows;
+    return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+  }
 
-  static bool get platformIsMacOS => Platform.isMacOS;
+  static bool get platformIsWindows => !kIsWeb && Platform.isWindows;
 
-  static bool get platformIsLinux => Platform.isLinux;
+  static bool get platformIsMacOS => !kIsWeb && Platform.isMacOS;
 
-  static bool get platformIsMobile => Platform.isIOS || Platform.isAndroid;
+  static bool get platformIsLinux => !kIsWeb && Platform.isLinux;
 
-  static bool get platformIsIOS => Platform.isIOS;
+  static bool get platformIsMobile =>
+      !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
-  static bool get platformIsAndroid => Platform.isAndroid;
+  static bool get platformIsIOS => !kIsWeb && Platform.isIOS;
+
+  static bool get platformIsAndroid => !kIsWeb && Platform.isAndroid;
 
   static bool get platformIsWeb => false;
 
-  static bool get platformIsDarwin => Platform.isIOS || Platform.isMacOS;
+  static bool get platformIsDarwin =>
+      !kIsWeb && Platform.isIOS || Platform.isMacOS;
 
   static Future<T?> invokeMethod<T, P>(String methodName,
       [dynamic param]) async {
+    if (kIsWeb) return null;
+
     await initialize();
 
     return _channel.invokeMethod<T>(
@@ -55,6 +61,8 @@ class WebRTC {
   ///
   /// "bypassVoiceProcessing": a boolean that bypasses the audio processing for the audio device.
   static Future<void> initialize({Map<String, dynamic>? options}) async {
+    if (kIsWeb) return;
+
     if (!initialized) {
       await _channel.invokeMethod<void>('initialize', <String, dynamic>{
         'options': options ?? {},

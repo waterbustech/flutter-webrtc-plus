@@ -1,7 +1,7 @@
 // Dart imports:
 import 'dart:async';
 import 'dart:js_interop';
-import 'dart:js_util' as jsutil;
+import 'dart:js_interop_unsafe' as jsutil;
 import 'dart:ui_web' as web_ui;
 
 // Flutter imports:
@@ -244,9 +244,8 @@ class RTCVideoRenderer extends ValueNotifier<RTCVideoValue>
   Future<bool> audioOutput(String deviceId) async {
     try {
       final element = _audioElement;
-      if (null != element && jsutil.hasProperty(element, 'setSinkId')) {
-        await jsutil.promiseToFuture<void>(
-            jsutil.callMethod(element, 'setSinkId', [deviceId]));
+      if (null != element && element.hasProperty('setSinkId'.toJS).toDart) {
+        element.callMethod('setSinkId'.toJS, [deviceId] as JSAny?);
 
         return true;
       }

@@ -1,8 +1,6 @@
-// Dart imports:
-import 'dart:io';
-
 // Flutter imports:
 import 'package:flutter/foundation.dart';
+import 'package:universal_io/io.dart';
 
 // Project imports:
 import '../flutter_webrtc_plus.dart';
@@ -242,5 +240,6 @@ class Helper {
 
   static bool get platformSupportGPUPixel => !WebRTC.platformIsWeb;
 
-  static bool get platformIsDarwin => Platform.isIOS || Platform.isMacOS;
+  static bool get platformIsDarwin =>
+      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
 }

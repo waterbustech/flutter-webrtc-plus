@@ -14,7 +14,6 @@ import WebRTC
     
     @objc public init(videoSource: RTCVideoSource, virtualBackground: RTCVirtualBackground) {
         super.init()
-        print("init BeautyFilterDelegate with virtualBackground: \(virtualBackground == nil)")
         self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource, virtualBackground: virtualBackground)
         self.beautyFilter = RTCBeautyFilter(delegate: self.beautyFilterDelegate)
     }
@@ -89,7 +88,7 @@ extension RTCVideoPipe {
 
 class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     var lastFrameTimestamp: Int64 = 0
-    let targetFrameDurationNs: Int64 = Int64(1_000_000_000 / 24) // 24fps
+    let targetFrameDurationNs: Int64 = Int64(1_000_000_000 / 30) // 30fps
     
     var videoSource: RTCVideoSource?
     var virtualBackground: RTCVirtualBackground?
@@ -103,7 +102,6 @@ class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
     }
     
     deinit {
-        print("RTCVirtualBackground deinit called")
         self.videoSource = nil
         self.virtualBackground = nil
         self.backgroundImage = nil
@@ -283,27 +281,4 @@ extension CIImage {
 
         return finalPixelBuffer
     }
-    
-    // func saveCIImageToDisk(fileName: String) -> Bool {
-    //     guard let cgImage = CIContext().createCGImage(self, from: self.extent) else {
-    //         print("Failed to create CGImage from CIImage")
-    //         return false
-    //     }
-    
-    //     guard let data = UIImage(cgImage: cgImage).jpegData(compressionQuality: 1.0) else {
-    //         print("Failed to convert CGImage to JPEG data")
-    //         return false
-    //     }
-    
-    //     do {
-    //         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-    //         let fileURL = documentsURL.appendingPathComponent(fileName)
-    //         try data.write(to: fileURL)
-    //         print("CIImage saved successfully to: \(fileURL.path)")
-    //         return true
-    //     } catch {
-    //         print("Failed to write data to file: \(error.localizedDescription)")
-    //         return false
-    //     }
-    // }
 }
