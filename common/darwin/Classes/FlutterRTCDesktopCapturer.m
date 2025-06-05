@@ -8,6 +8,9 @@
 #import "FlutterRPScreenRecorder.h"
 #endif
 
+#import "VideoProcessingAdapter.h"
+#import "LocalVideoTrack.h"
+
 #if TARGET_OS_OSX
 RTCDesktopMediaList* _screen = nil;
 RTCDesktopMediaList* _window = nil;
@@ -19,24 +22,30 @@ NSArray<RTCDesktopSource*>* _captureSources;
 - (void)getDisplayMedia:(NSDictionary*)constraints result:(FlutterResult)result {
   NSString* mediaStreamId = [[NSUUID UUID] UUIDString];
   RTCMediaStream* mediaStream = [self.peerConnectionFactory mediaStreamWithStreamId:mediaStreamId];
-  RTCVideoSource* videoSource = [self.peerConnectionFactory videoSourceForScreenCast:NO];
+  RTCVideoSource* videoSource = [self.peerConnectionFactory videoSourceForScreenCast:YES];
   NSString* trackUUID = [[NSUUID UUID] UUIDString];
-
+  VideoProcessingAdapter *videoProcessingAdapter = [[VideoProcessingAdapter alloc] initWithRTCVideoSource:videoSource];
+  
 #if TARGET_OS_IPHONE
   BOOL useBroadcastExtension = false;
+  BOOL presentBroadcastPicker = false;
+
   id videoConstraints = constraints[@"video"];
   if ([videoConstraints isKindOfClass:[NSDictionary class]]) {
     // constraints.video.deviceId
     useBroadcastExtension =
-        [((NSDictionary*)videoConstraints)[@"deviceId"] isEqualToString:@"broadcast"];
+        [((NSDictionary*)videoConstraints)[@"deviceId"] hasPrefix:@"broadcast"];
+    presentBroadcastPicker =
+        useBroadcastExtension &&
+        ![((NSDictionary*)videoConstraints)[@"deviceId"] hasSuffix:@"-manual"];
   }
 
   id screenCapturer;
 
   if (useBroadcastExtension) {
-    screenCapturer = [[FlutterBroadcastScreenCapturer alloc] initWithDelegate:videoSource];
+    screenCapturer = [[FlutterBroadcastScreenCapturer alloc] initWithDelegate:videoProcessingAdapter];
   } else {
-    screenCapturer = [[FlutterRPScreenRecorder alloc] initWithDelegate:videoSource];
+    screenCapturer = [[FlutterRPScreenRecorder alloc] initWithDelegate:[videoProcessingAdapter source]];
   }
 
   [screenCapturer startCapture];
@@ -48,22 +57,22 @@ NSArray<RTCDesktopSource*>* _captureSources;
     [screenCapturer stopCaptureWithCompletionHandler:handler];
   };
 
-  // if (useBroadcastExtension) {
-  //   NSString* extension =
-  //       [[[NSBundle mainBundle] infoDictionary] valueForKey:kRTCScreenSharingExtension];
+  if (presentBroadcastPicker) {
+    NSString* extension =
+        [[[NSBundle mainBundle] infoDictionary] valueForKey:kRTCScreenSharingExtension];
 
-  //   RPSystemBroadcastPickerView* picker = [[RPSystemBroadcastPickerView alloc] init];
-  //   picker.showsMicrophoneButton = false;
-  //   if (extension) {
-  //     picker.preferredExtension = extension;
-  //   } else {
-  //     NSLog(@"Not able to find the %@ key", kRTCScreenSharingExtension);
-  //   }
-  //   SEL selector = NSSelectorFromString(@"buttonPressed:");
-  //   if ([picker respondsToSelector:selector]) {
-  //     [picker performSelector:selector withObject:nil];
-  //   }
-  // }
+    RPSystemBroadcastPickerView* picker = [[RPSystemBroadcastPickerView alloc] init];
+    picker.showsMicrophoneButton = false;
+    if (extension) {
+      picker.preferredExtension = extension;
+    } else {
+      NSLog(@"Not able to find the %@ key", kRTCScreenSharingExtension);
+    }
+    SEL selector = NSSelectorFromString(@"buttonPressed:");
+    if ([picker respondsToSelector:selector]) {
+      [picker performSelector:selector withObject:nil];
+    }
+  }
 #endif
 
 #if TARGET_OS_OSX
@@ -108,9 +117,10 @@ NSArray<RTCDesktopSource*>* _captureSources;
   }
   RTCDesktopCapturer* desktopCapturer;
   RTCDesktopSource* source = nil;
+
   if (useDefaultScreen) {
     desktopCapturer = [[RTCDesktopCapturer alloc] initWithDefaultScreen:self
-                                                        captureDelegate:videoSource];
+                                                        captureDelegate:videoProcessingAdapter];
   } else {
     source = [self getSourceById:sourceId];
     if (source == nil) {
@@ -119,7 +129,7 @@ NSArray<RTCDesktopSource*>* _captureSources;
     }
     desktopCapturer = [[RTCDesktopCapturer alloc] initWithSource:source
                                                         delegate:self
-                                                 captureDelegate:videoSource];
+                                                 captureDelegate:videoProcessingAdapter];
   }
   [desktopCapturer startCaptureWithFPS:fps];
   NSLog(@"start desktop capture: sourceId: %@, type: %@, fps: %lu", sourceId,
@@ -137,7 +147,9 @@ NSArray<RTCDesktopSource*>* _captureSources;
                                                                        trackId:trackUUID];
   [mediaStream addVideoTrack:videoTrack];
 
-  [self.localTracks setObject:videoTrack forKey:trackUUID];
+  LocalVideoTrack *localVideoTrack = [[LocalVideoTrack alloc] initWithTrack:videoTrack videoProcessing:videoProcessingAdapter];
+
+  [self.localTracks setObject:localVideoTrack forKey:trackUUID];
 
   NSMutableArray* audioTracks = [NSMutableArray array];
   NSMutableArray* videoTracks = [NSMutableArray array];

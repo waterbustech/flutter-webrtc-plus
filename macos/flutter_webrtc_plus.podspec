@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_webrtc_plus'
-  s.version          = '0.9.36'
+  s.version          = '0.14.0'
   s.summary          = 'Flutter WebRTC plugin for macOS.'
   s.description      = <<-DESC
 A new flutter plugin project.
@@ -22,31 +22,23 @@ A new flutter plugin project.
     if [ -f "frameworks.zip" ]; then
       rm frameworks.zip
     fi
-    if [ -d "gpupixel-macos-1.2.5" ]; then
-      rm -rf gpupixel-macos-1.2.5
-    fi
     if [ -d "gpupixel.framework" ]; then
       rm -rf gpupixel.framework
     fi
-    if [ -d "vnn_core_osx.framework" ]; then
-      rm -rf vnn_core_osx.framework
-    fi
-    if [ -d "vnn_face_osx.framework" ]; then
-      rm -rf vnn_face_osx.framework
-    fi
-    if [ -d "vnn_kit_osx.framework" ]; then
-      rm -rf vnn_kit_osx.framework
-    fi
     
-    curl -L -o frameworks.zip https://github.com/webrtcsdk/gpupixel-macos/archive/refs/tags/1.2.5.zip
+    curl -L -o frameworks.zip https://github.com/pixpark/gpupixel/releases/download/v0.3.1-beta.8/gpupixel_mac_Universal.zip
     unzip frameworks.zip
-    mv gpupixel-macos-1.2.5/gpupixel.framework .
-    mv gpupixel-macos-1.2.5/vnn_core_osx.framework .
-    mv gpupixel-macos-1.2.5/vnn_face_osx.framework .
-    mv gpupixel-macos-1.2.5/vnn_kit_osx.framework .
+    mv lib/gpupixel.framework .
+    rm -rf frameworks.zip bin lib models res include
   CMD
 
-  s.preserve_paths = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
-  s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_osx.framework', 'vnn_face_osx.framework', 'vnn_kit_osx.framework'
-  s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel', 'vnn_core_osx', 'vnn_face_osx', 'vnn_kit_osx'
+  s.preserve_paths = 'gpupixel.framework'
+  s.vendored_frameworks = 'gpupixel.framework'
+  s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel'
+
+  s.pod_target_xcconfig = { 
+    'DEFINES_MODULE' => 'YES',
+    'VALID_ARCHS[sdk=macosx*]' => 'arm64',
+    'EXCLUDED_ARCHS[sdk=macosx*]' => 'x86_64'
+  }
 end

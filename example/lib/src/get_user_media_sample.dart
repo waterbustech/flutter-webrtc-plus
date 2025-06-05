@@ -1,9 +1,11 @@
 import 'dart:core';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc_plus/flutter_webrtc_plus.dart';
+import 'package:gallery_saver_plus/gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 
 /*
@@ -21,7 +23,9 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
   final _localRenderer = RTCVideoRenderer();
   bool _inCalling = false;
   bool _isTorchOn = false;
+  bool _isFrontCamera = true;
   MediaRecorder? _mediaRecorder;
+  String? _mediaRecorderFilePath;
 
   bool get _isRec => _mediaRecorder != null;
 
@@ -99,32 +103,69 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
 
   void _startRecording() async {
     if (_localStream == null) throw Exception('Stream is not initialized');
-    if (Platform.isIOS) {
-      print('Recording is not available on iOS');
-      return;
-    }
     // TODO(rostopira): request write storage permission
-    final storagePath = await getExternalStorageDirectory();
-    if (storagePath == null) throw Exception('Can\'t find storagePath');
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-    final filePath = storagePath.path + '/webrtc_sample/test.mp4';
-    _mediaRecorder = MediaRecorder();
+    if (!(Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      throw 'Unsupported platform';
+    }
+
+    final tempDir = await getTemporaryDirectory();
+    if (!(await tempDir.exists())) {
+      await tempDir.create(recursive: true);
+    }
+
+    _mediaRecorderFilePath = '${tempDir.path}/$timestamp.mp4';
+
+    if (_mediaRecorderFilePath == null) {
+      throw Exception('Can\'t find storagePath');
+    }
+
+    final file = File(_mediaRecorderFilePath!);
+    if (await file.exists()) {
+      await file.delete();
+    }
+    _mediaRecorder = MediaRecorder(albumName: 'FlutterWebRTC');
     setState(() {});
 
     final videoTrack = _localStream!
         .getVideoTracks()
         .firstWhere((track) => track.kind == 'video');
+
     await _mediaRecorder!.start(
-      filePath,
+      _mediaRecorderFilePath!,
       videoTrack: videoTrack,
+      audioChannel: RecorderAudioChannel.OUTPUT,
     );
   }
 
   void _stopRecording() async {
+    if (_mediaRecorderFilePath == null) {
+      return;
+    }
+
+    // album name works only for android, for ios use gallerySaver
     await _mediaRecorder?.stop();
     setState(() {
       _mediaRecorder = null;
     });
+
+    // this is only for ios, android already saves to albumName
+    await GallerySaver.saveVideo(
+      _mediaRecorderFilePath!,
+      albumName: 'FlutterWebRTC',
+    );
+
+    _mediaRecorderFilePath = null;
+  }
+
+  void onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
+    final point = Point<double>(
+      details.localPosition.dx / constraints.maxWidth,
+      details.localPosition.dy / constraints.maxHeight,
+    );
+    Helper.setFocusPoint(_localStream!.getVideoTracks().first, point);
+    Helper.setExposurePoint(_localStream!.getVideoTracks().first, point);
   }
 
   void _toggleTorch() async {
@@ -152,17 +193,19 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
     final videoTrack = _localStream!
         .getVideoTracks()
         .firstWhere((track) => track.kind == 'video');
-    await WebRTC.invokeMethod('mediaStreamTrackSetZoom',
-        <String, dynamic>{'trackId': videoTrack.id, 'zoomLevel': zoomLevel});
+    await Helper.setZoom(videoTrack, zoomLevel);
   }
 
-  void _toggleCamera() async {
+  void _switchCamera() async {
     if (_localStream == null) throw Exception('Stream is not initialized');
 
     final videoTrack = _localStream!
         .getVideoTracks()
         .firstWhere((track) => track.kind == 'video');
     await Helper.switchCamera(videoTrack);
+    setState(() {
+      _isFrontCamera = _isFrontCamera;
+    });
   }
 
   void _captureFrame() async {
@@ -199,7 +242,7 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
                 ),
                 IconButton(
                   icon: Icon(Icons.switch_video),
-                  onPressed: _toggleCamera,
+                  onPressed: _switchCamera,
                 ),
                 IconButton(
                   icon: Icon(Icons.camera),
@@ -236,15 +279,20 @@ class _GetUserMediaSampleState extends State<GetUserMediaSample> {
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
             decoration: BoxDecoration(color: Colors.black54),
-            child: GestureDetector(
-              onScaleStart: (details) {},
-              onScaleUpdate: (details) {
-                if (details.scale != 1.0) {
-                  setZoom(details.scale);
-                }
-              },
-              child: RTCVideoView(_localRenderer, mirror: true),
-            ),
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+              return GestureDetector(
+                onScaleStart: (details) {},
+                onScaleUpdate: (details) {
+                  if (details.scale != 1.0) {
+                    setZoom(details.scale);
+                  }
+                },
+                onTapDown: (TapDownDetails details) =>
+                    onViewFinderTap(details, constraints),
+                child: RTCVideoView(_localRenderer, mirror: false),
+              );
+            }),
           ));
         },
       ),

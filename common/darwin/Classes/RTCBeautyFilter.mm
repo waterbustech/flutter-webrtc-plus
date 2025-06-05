@@ -10,17 +10,18 @@
 
 using namespace gpupixel;
 
-static void releaseARGBData(void *releaseRefCon, const void *baseAddress) {
+static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     free((void*)baseAddress);
 }
 
 @interface RTCBeautyFilter () {
-    std::shared_ptr<SourceRawDataInput> gpuPixelRawInput;
-    std::shared_ptr<BeautyFaceFilter> beauty_face_filter_;
-    std::shared_ptr<TargetRawDataOutput> targetRawOutput_;
-    std::shared_ptr<FaceReshapeFilter> face_reshape_filter_;
-    std::shared_ptr<gpupixel::FaceMakeupFilter> lipstick_filter_;
-    std::shared_ptr<gpupixel::FaceMakeupFilter> blusher_filter_;
+    std::shared_ptr<SourceRawData> sourceRawData;
+    std::shared_ptr<BeautyFaceFilter> beautyFaceFilter;
+    std::shared_ptr<SinkRawData> sinkRawData;
+    std::shared_ptr<FaceReshapeFilter> faceReshapeFilter;
+    std::shared_ptr<gpupixel::FaceMakeupFilter> lipstickFilter;
+    std::shared_ptr<gpupixel::FaceMakeupFilter> blusherFilter;
+    std::shared_ptr<gpupixel::FaceDetector> faceDetector;
 }
 
 @end
@@ -40,12 +41,12 @@ static void releaseARGBData(void *releaseRefCon, const void *baseAddress) {
     NSLog(@"RTCBeautyFilter deallocated");
     
     // Clean up resources
-    gpuPixelRawInput.reset();
-    beauty_face_filter_.reset();
-    targetRawOutput_.reset();
-    face_reshape_filter_.reset();
-    lipstick_filter_.reset();
-    blusher_filter_.reset();
+    sourceRawData.reset();
+    beautyFaceFilter.reset();
+    sinkRawData.reset();
+    faceReshapeFilter.reset();
+    lipstickFilter.reset();
+    blusherFilter.reset();
     
     // Release delegate
     _delegate = nil;
@@ -57,157 +58,144 @@ static void releaseARGBData(void *releaseRefCon, const void *baseAddress) {
 }
 
 - (void)initVideoFilter {
-    gpupixel::GPUPixelContext::getInstance()->runSync([&] {
-        gpuPixelRawInput = SourceRawDataInput::create();
-        
-        // Create filters
-        lipstick_filter_ = LipstickFilter::create();
-        blusher_filter_ = BlusherFilter::create();
-        face_reshape_filter_ = FaceReshapeFilter::create();
-        
-        gpuPixelRawInput->RegLandmarkCallback([=](std::vector<float> landmarks) {
-            lipstick_filter_->SetFaceLandmarks(landmarks);
-            blusher_filter_->SetFaceLandmarks(landmarks);
-            face_reshape_filter_->SetFaceLandmarks(landmarks);
-        });
-        
-        // Create filter
-        targetRawOutput_ = TargetRawDataOutput::create();
-        beauty_face_filter_ = BeautyFaceFilter::create();
-        
-        id<RTCBeautyFilterDelegate> delegatePtr = _delegate;
-        
-        RawOutputCallback callback = [delegatePtr](const uint8_t* data, int width, int height, int64_t ts) {
-            
-            CVPixelBufferRef pixelBuffer = NULL;
-            
-            size_t stride = width * 4;
-            
-#if TARGET_OS_IOS || TARGET_OS_SIMULATOR
-            // iOS: Use original data directly for BGRA format
-            // Create pixel buffer attributes
-            NSDictionary *options = @{
-                (NSString *)kCVPixelBufferCGImageCompatibilityKey: @YES,
-                (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey: @YES
-            };
-            
-            // Create pixel buffer
-            CVReturn result = CVPixelBufferCreateWithBytes(kCFAllocatorDefault,
-                                                           width,
-                                                           height,
-                                                           kCVPixelFormatType_32BGRA,
-                                                           (void *)data,
-                                                           stride,
-                                                           NULL,
-                                                           NULL,
-                                                           (__bridge CFDictionaryRef)options,
-                                                           &pixelBuffer);
-            
-#else
-            uint8_t* argbData = (uint8_t*)malloc(stride * height);
-            if (!argbData) {
-                NSLog(@"Error: Unable to allocate memory for ARGB pixel data");
-                return;
-            }
-
-            // Convert ABGR or BGRA to ARGB
-            for (int i = 0; i < width * height; ++i) {
-                argbData[i * 4 + 0] = data[i * 4 + 3];  // Alpha
-                argbData[i * 4 + 1] = data[i * 4 + 0];  // Red
-                argbData[i * 4 + 2] = data[i * 4 + 1];  // Green
-                argbData[i * 4 + 3] = data[i * 4 + 2];  // Blue
-            }
-
-            // Create pixel buffer attributes
-            NSDictionary *options = @{
-                (NSString *)kCVPixelBufferCGImageCompatibilityKey: @YES,
-                (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey: @YES
-            };
-
-            // Create pixel buffer with a release callback to free argbData
-            CVReturn result = CVPixelBufferCreateWithBytes(
-                kCFAllocatorDefault,
-                width,
-                height,
-                kCVPixelFormatType_32ARGB,
-                (void *)argbData,
-                stride,
-                releaseARGBData,  // Custom deallocator
-                NULL,  // No reference context needed
-                (__bridge CFDictionaryRef)options,
-                &pixelBuffer
-            );
-
-            if (result != kCVReturnSuccess) {
-                NSLog(@"Error: Unable to create pixel buffer");
-                free(argbData);  // Free the buffer manually in case of failure
-            }
-
-#endif
-            
-            if (result != kCVReturnSuccess) {
-                NSLog(@"Error: Unable to create CVPixelBuffer");
-                return;
-            }
-            
-            if (delegatePtr) {
-                [delegatePtr didReceivePixelBuffer:pixelBuffer width:width height:height timestamp:ts];
-            }
-            
-            CVPixelBufferRelease(pixelBuffer);
-        };
-        
-        targetRawOutput_->setPixelsCallbck(callback);
-        
-        
-        gpuPixelRawInput->addTarget(lipstick_filter_)
-        ->addTarget(blusher_filter_)
-        ->addTarget(face_reshape_filter_)
-        ->addTarget(beauty_face_filter_)
-        ->addTarget(targetRawOutput_);
-    });
+    sourceRawData = SourceRawData::Create();
+    
+    // Create filters
+    lipstickFilter = LipstickFilter::Create();
+    blusherFilter = BlusherFilter::Create();
+    faceReshapeFilter = FaceReshapeFilter::Create();
+    faceDetector = FaceDetector::Create();
+    beautyFaceFilter = BeautyFaceFilter::Create();
+    
+    // Create result handler
+    sinkRawData = SinkRawData::Create();
+    
+    id<RTCBeautyFilterDelegate> delegatePtr = _delegate;
+    
+    sourceRawData->AddSink(lipstickFilter)
+    ->AddSink(blusherFilter)
+    ->AddSink(faceReshapeFilter)
+    ->AddSink(beautyFaceFilter)
+    ->AddSink(sinkRawData);
 }
 
 #pragma mark - Property assignment
 
 - (void)setBeautyValue:(CGFloat)value {
     _beautyValue = value;
-    beauty_face_filter_->setBlurAlpha(value);
+    beautyFaceFilter->SetBlurAlpha(value);
 }
 
 - (void)setWhithValue:(CGFloat)value {
     _whithValue = value;
-    beauty_face_filter_->setWhite(value);
+    beautyFaceFilter->SetWhite(value);
 }
 
 - (void)setThinFaceValue:(CGFloat)value {
     _thinFaceValue = value;
-    face_reshape_filter_->setFaceSlimLevel(value);
+    faceReshapeFilter->SetFaceSlimLevel(value);
 }
 
 - (void)setEyeValue:(CGFloat)value {
     _eyeValue = value;
-    face_reshape_filter_->setEyeZoomLevel(value);
+    faceReshapeFilter->SetEyeZoomLevel(value);
 }
 
 - (void)setLipstickValue:(CGFloat)value {
     _lipstickValue = value;
-    lipstick_filter_->setBlendLevel(value);
+    lipstickFilter->SetBlendLevel(value);
 }
 
 - (void)setBlusherValue:(CGFloat)value {
     _blusherValue = value;
-    blusher_filter_->setBlendLevel(value);
+    blusherFilter->SetBlendLevel(value);
 }
 
 - (void)processVideoFrame:(CVPixelBufferRef)imageBuffer {
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
     auto width = CVPixelBufferGetWidth(imageBuffer);
     auto height = CVPixelBufferGetHeight(imageBuffer);
-    auto stride = CVPixelBufferGetBytesPerRow(imageBuffer)/4;
+    auto stride = CVPixelBufferGetBytesPerRow(imageBuffer);
     auto pixels = (const uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer);
-    gpuPixelRawInput->uploadBytes(pixels, width, height, stride);
+    
+    std::vector<float> landmarks =
+    faceDetector->Detect(pixels, width, height, stride,
+                         GPUPIXEL_MODE_FMT_VIDEO, GPUPIXEL_FRAME_TYPE_BGRA);
+    
+    if (!landmarks.empty()) {
+        lipstickFilter->SetFaceLandmarks(landmarks);
+        blusherFilter->SetFaceLandmarks(landmarks);
+        faceReshapeFilter->SetFaceLandmarks(landmarks);
+    }
+    
+    sourceRawData->ProcessData(pixels, width, height, stride, GPUPIXEL_FRAME_TYPE_BGRA);
     CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+    
+    // Get processed result
+    const uint8_t* processedData = sinkRawData->GetRgbaBuffer();
+    
+    // Process the result using the callback logic
+    if (processedData) {
+        // Get current timestamp
+        int64_t timestamp = [[NSDate date] timeIntervalSince1970] * 1000000; // microseconds
+        [self processFilteredData:processedData
+                            width:(int)width
+                           height:(int)height
+                        timestamp:timestamp];
+    }
+}
+
+- (void)processFilteredData:(const uint8_t*)data width:(int)width height:(int)height timestamp:(int64_t)ts {
+    CVPixelBufferRef pixelBuffer = NULL;
+    
+    size_t stride = width * 4;
+    
+    uint8_t* bgraData = (uint8_t*)malloc(stride * height);
+    if (!bgraData) {
+        NSLog(@"Error: Unable to allocate memory for BGRA pixel data");
+        return;
+    }
+    
+    // Convert RGBA to BGRA
+    for (int i = 0; i < width * height; ++i) {
+        bgraData[i * 4 + 0] = data[i * 4 + 2];  // Blue
+        bgraData[i * 4 + 1] = data[i * 4 + 1];  // Green
+        bgraData[i * 4 + 2] = data[i * 4 + 0];  // Red
+        bgraData[i * 4 + 3] = data[i * 4 + 3];  // Alpha
+    }
+    
+    // Create pixel buffer attributes
+    NSDictionary *options = @{
+        (NSString *)kCVPixelBufferCGImageCompatibilityKey: @YES,
+        (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey: @YES
+    };
+    
+    // Create pixel buffer with a release callback to free argbData
+    CVReturn result = CVPixelBufferCreateWithBytes(
+                                                   kCFAllocatorDefault,
+                                                   width,
+                                                   height,
+                                                   kCVPixelFormatType_32BGRA,
+                                                   (void *)bgraData,
+                                                   stride,
+                                                   releaseBGRAData,  // Custom deallocator
+                                                   NULL,  // No reference context needed
+                                                   (__bridge CFDictionaryRef)options,
+                                                   &pixelBuffer
+                                                   );
+    
+    if (result != kCVReturnSuccess) {
+        NSLog(@"Error: Unable to create pixel buffer");
+        free(bgraData);  // Free the buffer manually in case of failure
+        return;
+    }
+    
+    // Send processed pixel buffer to delegate
+    if (_delegate) {
+        [_delegate didReceivePixelBuffer:pixelBuffer width:width height:height timestamp:ts];
+    }
+    
+    CVPixelBufferRelease(pixelBuffer);
 }
 
 

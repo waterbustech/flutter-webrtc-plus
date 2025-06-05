@@ -10,14 +10,20 @@ import 'media_stream_track_impl.dart';
 import 'utils.dart';
 
 class MediaRecorderNative extends MediaRecorder {
+  MediaRecorderNative({
+    String? albumName = 'FlutterWebRTC',
+  }) : _albumName = albumName;
   static final _random = Random();
   final _recorderId = _random.nextInt(0x7FFFFFFF);
+  var _isStarted = false;
+  final String? _albumName;
 
   @override
-  Future<void> start(String path,
-      {MediaStreamTrack? videoTrack, RecorderAudioChannel? audioChannel
-      // TODO(cloudwebrtc): add codec/quality options
-      }) async {
+  Future<void> start(
+    String path, {
+    MediaStreamTrack? videoTrack,
+    RecorderAudioChannel? audioChannel,
+  }) async {
     if (audioChannel == null && videoTrack == null) {
       throw Exception('Neither audio nor video track were provided');
     }
@@ -31,6 +37,7 @@ class MediaRecorderNative extends MediaRecorder {
           ? videoTrack.peerConnectionId
           : null
     });
+    _isStarted = true;
   }
 
   @override
@@ -42,6 +49,13 @@ class MediaRecorderNative extends MediaRecorder {
   }
 
   @override
-  Future<dynamic> stop() async => await WebRTC.invokeMethod(
-      'stopRecordToFile', {'recorderId': _recorderId});
+  Future<dynamic> stop() async {
+    if (!_isStarted) {
+      throw "Media recorder not started!";
+    }
+    return await WebRTC.invokeMethod('stopRecordToFile', {
+      'recorderId': _recorderId,
+      'albumName': _albumName,
+    });
+  }
 }

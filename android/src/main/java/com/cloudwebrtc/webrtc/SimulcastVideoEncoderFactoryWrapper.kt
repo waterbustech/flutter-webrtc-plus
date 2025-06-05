@@ -1,21 +1,9 @@
 package com.cloudwebrtc.webrtc
 
-import android.os.Build
-import org.webrtc.EglBase
-import org.webrtc.HardwareVideoEncoderFactory
-import org.webrtc.SimulcastVideoEncoderFactory
-import org.webrtc.SoftwareVideoEncoderFactory
-import org.webrtc.VideoCodecInfo
-import org.webrtc.VideoCodecStatus
-import org.webrtc.VideoEncoder
-import org.webrtc.VideoEncoderFactory
-import org.webrtc.VideoEncoderFallback
-import org.webrtc.VideoFrame
-import org.webrtc.WrappedNativeVideoEncoder
+import org.webrtc.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-
 
 /*
 Copyright 2017, Lyo Kato <lyo.kato at gmail.com> (Original Author)
@@ -81,23 +69,7 @@ internal class SimulcastVideoEncoderFactoryWrapper(
             val supportedCodecInfos: MutableList<VideoCodecInfo> = mutableListOf()
             supportedCodecInfos.addAll(softwareVideoEncoderFactory.supportedCodecs)
             supportedCodecInfos.addAll(hardwareVideoEncoderFactory.supportedCodecs)
-
-            val preferredCodecOrder = arrayOf("H265", "H264", "VP9", "AV1", "VP8")
-
-            return getPreferredVideoCodecs(preferredCodecOrder, supportedCodecInfos)
-        }
-
-        private fun getPreferredVideoCodecs(codecOrder: Array<String>, supportedCodecs: MutableList<VideoCodecInfo>): Array<VideoCodecInfo> {
-            val preferredCodecs: MutableList<VideoCodecInfo> = ArrayList()
-            for (codec in codecOrder) {
-                for (info in supportedCodecs) {
-                    if (info.name.equals(codec, ignoreCase = true)) {
-                        preferredCodecs.add(info)
-                        break
-                    }
-                }
-            }
-            return preferredCodecs.toTypedArray()
+            return supportedCodecInfos.toTypedArray()
         }
 
     }
@@ -120,20 +92,20 @@ internal class SimulcastVideoEncoderFactoryWrapper(
         ): VideoCodecStatus {
             streamSettings = settings
             val future = executor.submit(Callable {
-            //     LKLog.i {
-            //         """initEncode() thread=${Thread.currentThread().name} [${Thread.currentThread().id}]
-            //     |  encoder=${encoder.implementationName}
-            //     |  streamSettings:
-            //     |    numberOfCores=${settings.numberOfCores}
-            //     |    width=${settings.width}
-            //     |    height=${settings.height}
-            //     |    startBitrate=${settings.startBitrate}
-            //     |    maxFramerate=${settings.maxFramerate}
-            //     |    automaticResizeOn=${settings.automaticResizeOn}
-            //     |    numberOfSimulcastStreams=${settings.numberOfSimulcastStreams}
-            //     |    lossNotification=${settings.capabilities.lossNotification}
-            // """.trimMargin()
-            //     }
+                //     LKLog.i {
+                //         """initEncode() thread=${Thread.currentThread().name} [${Thread.currentThread().id}]
+                //     |  encoder=${encoder.implementationName}
+                //     |  streamSettings:
+                //     |    numberOfCores=${settings.numberOfCores}
+                //     |    width=${settings.width}
+                //     |    height=${settings.height}
+                //     |    startBitrate=${settings.startBitrate}
+                //     |    maxFramerate=${settings.maxFramerate}
+                //     |    automaticResizeOn=${settings.automaticResizeOn}
+                //     |    numberOfSimulcastStreams=${settings.numberOfSimulcastStreams}
+                //     |    lossNotification=${settings.capabilities.lossNotification}
+                // """.trimMargin()
+                //     }
                 return@Callable encoder.initEncode(settings, callback)
             })
             return future.get()
@@ -230,7 +202,7 @@ internal class SimulcastVideoEncoderFactoryWrapper(
                 return null
             }
             if (encoder is WrappedNativeVideoEncoder) {
-              return encoder
+                return encoder
             }
             return StreamEncoderWrapper(encoder)
         }
@@ -261,4 +233,5 @@ internal class SimulcastVideoEncoderFactoryWrapper(
     override fun getSupportedCodecs(): Array<VideoCodecInfo> {
         return native.supportedCodecs
     }
+
 }

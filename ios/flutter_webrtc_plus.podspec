@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_webrtc_plus'
-  s.version          = '0.9.36'
+  s.version          = '0.14.0'
   s.summary          = 'Flutter WebRTC plugin for iOS.'
   s.description      = <<-DESC
 A new flutter plugin project.
@@ -22,32 +22,18 @@ A new flutter plugin project.
     if [ -f "frameworks.zip" ]; then
       rm frameworks.zip
     fi
-    if [ -d "gpupixel-ios-1.2.5" ]; then
-      rm -rf gpupixel-ios-1.2.5
-    fi
     if [ -d "gpupixel.framework" ]; then
       rm -rf gpupixel.framework
     fi
-    if [ -d "vnn_core_ios.framework" ]; then
-      rm -rf vnn_core_ios.framework
-    fi
-    if [ -d "vnn_face_ios.framework" ]; then
-      rm -rf vnn_face_ios.framework
-    fi
-    if [ -d "vnn_kit_ios.framework" ]; then
-      rm -rf vnn_kit_ios.framework
-    fi
     
-    curl -L -o frameworks.zip https://github.com/webrtcsdk/gpupixel-ios/archive/refs/tags/1.2.5.zip
+    curl -L -o frameworks.zip https://github.com/pixpark/gpupixel/releases/download/v0.3.1-beta.8/gpupixel_ios_arm64.zip
     unzip frameworks.zip
-    mv gpupixel-ios-1.2.5/gpupixel.framework .
-    mv gpupixel-ios-1.2.5/vnn_core_ios.framework .
-    mv gpupixel-ios-1.2.5/vnn_face_ios.framework .
-    mv gpupixel-ios-1.2.5/vnn_kit_ios.framework .
+    mv lib/gpupixel.framework .
+    rm -rf frameworks.zip lib models res include
   CMD
 
-  s.preserve_paths = 'gpupixel.framework', 'vnn_core_ios.framework', 'vnn_face_ios.framework', 'vnn_kit_ios.framework'
-  s.vendored_frameworks = 'gpupixel.framework', 'vnn_core_ios.framework', 'vnn_face_ios.framework', 'vnn_kit_ios.framework'
-  s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel', 'vnn_core_ios', 'vnn_face_ios', 'vnn_kit_ios'
+  s.preserve_paths = 'gpupixel.framework'
+  s.vendored_frameworks = 'gpupixel.framework'
+  s.framework = 'AVFoundation', 'CoreMedia', 'gpupixel'
   # s.static_framework = true
 end

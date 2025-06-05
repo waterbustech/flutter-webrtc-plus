@@ -7,10 +7,6 @@ buildscript {
         google()
         mavenCentral()
         jcenter()
-
-        flatDir {
-            dirs 'libs'
-        }
     }
 
     dependencies {
@@ -79,7 +75,7 @@ project.ext.TEST_ASSETS_DIR = projectDir.toString() + '/src/androidTest/assets'
 apply from: 'download_models.gradle'
 
 dependencies {
-    implementation 'tech.waterbus:webrtc:128.6613.02'
+    implementation 'io.github.webrtc-sdk:android:125.6422.03'
     implementation 'com.github.davidliu:audioswitch:89582c47c9a04c62f90aa5e57251af4800a62c9a'
     implementation 'androidx.annotation:annotation:1.8.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
@@ -93,5 +89,5 @@ dependencies {
     implementation 'com.google.android.gms:play-services-tflite-gpu:16.2.0'
 
     // Beauty Filters
-    implementation 'tech.waterbus:gpupixel:1.0.2'
+    implementation 'com.github.webrtcsdk:gpupixel:0.3.1'
 }

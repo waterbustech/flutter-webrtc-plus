@@ -10,12 +10,11 @@ namespace flutter_webrtc_plus_plugin {
 
 class FlutterFrameCryptorObserver : public libwebrtc::RTCFrameCryptorObserver {
  public:
-  FlutterFrameCryptorObserver(BinaryMessenger* messenger,
-                              const std::string& channelName)
-      : event_channel_(EventChannelProxy::Create(messenger, channelName)) {}
-  void OnFrameCryptionStateChanged(const string participant_id,
-                                   libwebrtc::RTCFrameCryptionState state);
-
+  FlutterFrameCryptorObserver(BinaryMessenger* messenger, TaskRunner* task_runner, const std::string& channelName)
+      : event_channel_(EventChannelProxy::Create(messenger, task_runner, channelName)) {}
+  void OnFrameCryptionStateChanged(
+      const string participant_id,
+      libwebrtc::RTCFrameCryptionState state);
  private:
   std::unique_ptr<EventChannelProxy> event_channel_;
 };

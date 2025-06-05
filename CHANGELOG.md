@@ -1,33 +1,98 @@
+
 # Changelog
 
---------------------------------------------
-[0.12.1+7] - 2025-04-22
+[0.14.1] - 2025-05-22
 
-* [Darwin] update WebRTC SDK
+* [Android] fix: Recording bug (#1839)
+* [Android] fix: calls in terminated mode by disabling orientation manager (#1840)
+* [Android] fix: Wait for audio and video thread to fully stop to avoid corrupted recordings (#1836)
 
-[0.12.1+5] - 2024-12-31
+[0.14.0] - 2025-05-06
 
-* [Darwin] warm-up virtual background.
+* [iOS/Android]feat: Media Recorder implementation Android and iOS (#1810)
+* [Wndows] fix: Pickup registrar for plugin by plugin registrar manager (#1752)
+* [Linux] fix: add task runner for linux. (#1821)
+* [iOS/macOS] fix: Fix deadlock when creating a frame cryptor on iOS/macOS.
 
-[0.12.1+5] - 2024-12-31
+[0.13.1+hotfix.1] - 2025-04-07
 
-* fix getStats errors.
+* [Android] fix: Fix `clearAndroidCommunicationDevice` call blocking.
 
-[0.12.1+4] - 2024-12-30
+[0.13.1] - 2025-04-03
 
-* fix compiler errors.
+* [Android] fix: remove setPreferredInputDevice when getUserAduio. (#1808)
+* [Web] fix: race condition in RTCVideoRenderer for Web (#1805)
+* [Android] fix: Migrate from onSurfaceDestroyed to onSurfaceCleanup for SurfaceProducer.Callback. (#1806)
 
-[0.12.1+3] - 2024-12-19
+[0.13.0] - 2025-03-24
 
-* [Linux] Implement GPUPixel
+* [All] feat: add getBufferedAmount for DataChannel. (#1796)
+* [Windows] fix: fixed non-platform thread call error. (#1795)
 
-[0.12.1+2] - 2024-12-03
+[0.12.12+hotfix.1] - 2025-03-12
 
-* [Android] Fix camera rotation
+* [Android] fix: fixed video not rendered after resume from background.
 
-[0.12.1+1] - 2024-11-01
+[0.12.12] - 2025-03-09
 
-* [Darwin] Convert PixelBuffer in RTCVideoFrame to kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+* [Android] feat: Migrate to the new Surface API. (#1726)
+* [Chore] chore: fix sponsors logo and links.
+
+[0.12.11] - 2025-02-23
+
+* [web] bump version for dart_webrtc.
+* [web] fix: compile error for web with --wasm.
+
+[0.12.10] - 2025-02-18
+
+* [web] bump version for dart_webrtc.
+* [web] fix: compile error for web with --wasm.
+
+[0.12.9] - 2025-02-13
+
+* [iOS] feat: Add option to start capture without broadcast picker (#1764)
+
+[0.12.8] - 2025-02-07
+
+* [Dart] feat: expose rtc video value (#1754)
+* [Dart] chore: bump webrtc-interface to 1.2.1.
+  
+[0.12.7] - 2025-01-24
+
+* [iOS] More robustness for video renderer. (#1751)
+
+[0.12.6] - 2025-01-20
+
+* [iOS] fix In-app screen recording.
+* [Android] fix: avoid crashes when surfaceTextureHelper is null. (#1743)
+
+[0.12.5+hotfix.2] - 2024-12-25
+
+* [iOS] fix: Audio route issue for iOS.
+
+[0.12.5+hotfix.1] - 2024-12-25
+
+* [iOS/macOS] fix: Pass MediaConstraints for getUserAudio.
+
+[0.12.5] - 2024-12-23
+
+* [iOS/Android] Fixed buf for screen capture.
+* [Android] Fixed first frame flickering.
+
+[0.12.4] - 2024-12-16
+
+* [iOS/Android] add FocusMode/ExposureMode settings for mobile. (#1435)
+* [Dart] fix compiler errors.
+* [eLinux] add $ORIGIN to rpath in elinux (#1720).
+
+[0.12.3] - 2024-11-29
+
+* [iOS/Android/macOS] feat: Expose AV Processing and Sink native APIs.
+
+[0.12.2] - 2024-11-26
+
+* [Dart] fix: race condition during video renderer initialization. (#1692)
+* [Darwin] fix: Add mutex lock to avoid pixelbuffer access contention.  (#1694)
 
 [0.12.1+hotfix.1] - 2024-10-25
 
@@ -62,7 +127,6 @@
 * [iOS] added shared singleton for FlutterWebRTCPlugin (#1634)
 * [iOS] Using av samplebuffer for PlatformView (#1635)
 
-
 [0.11.5] - 2024-07-23
 
 * [Android] Report actual sizes for camera media stream track (#1636).
@@ -74,34 +138,6 @@
 [0.11.3] - 2024-07-12
 
 * Bump version for libwebrtc.
-
-[0.11.2+7] - 2024-10-12
-
-* [Fix] release buffer after convert result GPUPixel on macOS
-
-[0.11.2+6] - 2024-09-10
-
-* [Chore] Upgrade dart_webrtc_plus support web: ^1.0.0
-
-[0.11.2+5] - 2024-08-29
-
-* [Docs] Update setup beauty filters for Android
-
-[0.11.2+4] - 2024-08-27
-
-* [All] Upgrade KaiRTC to 128.6613.02
-  
-[0.11.2+3] - 2024-08-24
-
-* [All] Upgrade KaiRTC to 128.6613.01
-
-[0.11.2+2] - 2024-07-30
-
-* [Web] Upgrade dart_webrtc for support compile wasm
-
-[0.11.2+1] - 2024-07-11
-
-* [Android] Improve performance when convert Bitmap to VideoFrame
 
 [0.11.2] - 2024-07-09
 

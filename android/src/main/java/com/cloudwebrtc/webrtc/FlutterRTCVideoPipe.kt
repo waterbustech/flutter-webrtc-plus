@@ -14,11 +14,11 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import com.cloudwebrtc.webrtc.models.CacheFrame
 import com.cloudwebrtc.webrtc.utils.ImageSegmenterHelper
+import com.cloudwebrtc.webrtc.video.LocalVideoTrack
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
 import com.google.android.gms.tflite.java.TfLite
 import com.google.mediapipe.tasks.vision.core.RunningMode
-import com.pixpark.gpupixel.GPUPixelSource.ProcessedFrameDataCallback
 import org.webrtc.JavaI420Buffer
 import org.webrtc.VideoFrame
 import org.webrtc.VideoProcessor
@@ -28,40 +28,26 @@ import org.webrtc.YuvHelper
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 
-class FlutterRTCVideoPipe {
+class FlutterRTCVideoPipe: LocalVideoTrack.ExternalVideoFrameProcessing {
     var isGpuSupported = false
     private val tag: String = "[FlutterRTC-VideoPipe]"
-    private var videoSource: VideoSource? = null
     private var backgroundBitmap: Bitmap? = null
     private var expectConfidence = 0.7
     private var imageSegmentationHelper: ImageSegmenterHelper? = null
     private var sink: VideoSink? = null
     private val bitmapMap = HashMap<Long, CacheFrame>()
     private var lastProcessedFrameTime: Long = 0
-    private val targetFrameInterval: Long = 1000 / 24 // 1000 milliseconds divided by 24 FPS
+    private val targetFrameInterval: Long = 1000 / 30 // 30 FPS
     private var virtualBackground: FlutterRTCVirtualBackground? = null
     private var beautyFilters: FlutterRTCBeautyFilters? = null
 
-    fun initialize(context: Context, videoSource: VideoSource) {
-        this.videoSource = videoSource
+    fun initialize(context: Context) {
+        Log.d(tag, "Initialized")
+//        this.videoSource = videoSource
         this.virtualBackground = FlutterRTCVirtualBackground()
 
         if (this.beautyFilters == null) {
             this.beautyFilters = FlutterRTCBeautyFilters(context)
-
-            val beautyFiltersCallBack: ProcessedFrameDataCallback = ProcessedFrameDataCallback {
-                if (backgroundBitmap != null) {
-                    // Segment the input bitmap using the ImageSegmentationHelper
-                    val frameTimeMs: Long = SystemClock.uptimeMillis()
-                    bitmapMap[frameTimeMs] = CacheFrame(originalBitmap = it)
-
-                    imageSegmentationHelper?.segmentLiveStreamFrame(it, frameTimeMs)
-                } else {
-                    this.emitBitmapOnFrame(it)
-                }
-            }
-
-            beautyFilters?.setCallback(beautyFiltersCallBack)
         }
 
         // Enable GPU
@@ -123,11 +109,9 @@ class FlutterRTCVideoPipe {
                     bitmapMap.remove(timestampMS)
                 }
             })
-        processFrame()
     }
 
     fun dispose() {
-        this.videoSource = null
         this.expectConfidence = 0.7
         this.sink = null
         this.bitmapMap.clear()
@@ -145,47 +129,6 @@ class FlutterRTCVideoPipe {
     fun configurationVirtualBackground(bgBitmap: Bitmap, confidence: Double) {
         backgroundBitmap = bgBitmap
         expectConfidence = confidence
-    }
-
-    private fun processFrame() {
-        videoSource?.setVideoProcessor(object : VideoProcessor {
-            override fun onCapturerStarted(success: Boolean) {
-                // Handle video capture start event
-            }
-
-            override fun onCapturerStopped() {
-                // Handle video capture stop event
-            }
-
-            @SuppressLint("LongLogTag")
-            @RequiresApi(Build.VERSION_CODES.N)
-            override fun onFrameCaptured(frame: VideoFrame) {
-                if (sink != null) {
-                    val currentTime = System.currentTimeMillis()
-                    val elapsedSinceLastProcessedFrame = currentTime - lastProcessedFrameTime
-
-                    // Check if the elapsed time since the last processed frame is greater than the target interval
-                    if (elapsedSinceLastProcessedFrame >= targetFrameInterval) {
-                        // Process the current frame
-                        lastProcessedFrameTime = currentTime
-
-                        // Otherwise, perform segmentation on the captured frame and replace the background
-                        val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
-                        if (inputFrameBitmap != null) {
-                            beautyFilters?.processBitmap(inputFrameBitmap, frame.rotation)
-                        } else {
-                            Log.d(tag, "Convert video frame to bitmap failure")
-                        }
-                    }
-                }
-            }
-
-            override fun setSink(videoSink: VideoSink?) {
-                // Store the VideoSink to send the processed frame back to WebRTC
-                // The sink will be used after segmentation processing
-                sink = videoSink
-            }
-        })
     }
 
     /**
@@ -347,5 +290,40 @@ class FlutterRTCVideoPipe {
 
     fun setWhiteValue(value: Float) {
         this.beautyFilters?.setWhiteValue(value)
+    }
+
+    override fun onFrame(frame: VideoFrame) {
+        if (sink == null) return
+
+        val currentTime = System.currentTimeMillis()
+        val elapsedSinceLastProcessedFrame = currentTime - lastProcessedFrameTime
+
+        // Check if the elapsed time since the last processed frame is greater than the target interval
+        if (elapsedSinceLastProcessedFrame >= targetFrameInterval) {
+            // Process the current frame
+            lastProcessedFrameTime = currentTime
+
+            // Otherwise, perform segmentation on the captured frame and replace the background
+            val inputFrameBitmap: Bitmap? = videoFrameToBitmap(frame)
+            if (inputFrameBitmap != null) {
+                val frameFiltered = beautyFilters?.processBitmap(inputFrameBitmap, frame.rotation)
+
+                if (frameFiltered != null) {
+                    if (backgroundBitmap != null) {
+                        val frameTimeMs: Long = SystemClock.uptimeMillis()
+                        bitmapMap[frameTimeMs] = CacheFrame(originalBitmap = frameFiltered)
+                        imageSegmentationHelper?.segmentLiveStreamFrame(frameFiltered, frameTimeMs)
+                    } else {
+                        emitBitmapOnFrame(frameFiltered)
+                    }
+                }
+            } else {
+                Log.d(tag, "Convert video frame to bitmap failure")
+            }
+        }
+    }
+
+    override fun setSink(videoSink: VideoSink) {
+        sink = videoSink
     }
 }
