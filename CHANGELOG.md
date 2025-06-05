@@ -1,6 +1,10 @@
 
 # Changelog
 
+[0.14.1+1] - 2025-06-05
+
+* [Android/iOS/macOS] update latest gpupixel version
+
 [0.14.1] - 2025-05-22
 
 * [Android] fix: Recording bug (#1839)
