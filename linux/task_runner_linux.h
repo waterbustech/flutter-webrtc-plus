@@ -6,7 +6,7 @@
 #include <queue>
 #include "task_runner.h"
 
-namespace flutter_webrtc_plugin {
+namespace flutter_webrtc_plus_plugin {
 
 class TaskRunnerLinux : public TaskRunner {
  public:
