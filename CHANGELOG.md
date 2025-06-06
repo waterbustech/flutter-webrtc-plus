@@ -1,6 +1,11 @@
 
 # Changelog
 
+[0.14.1+2] - 2025-06-06
+
+* [Linux] fix: run fail
+* [Wasm] fix getStats
+
 [0.14.1+1] - 2025-06-05
 
 * [Android/iOS/macOS] update latest gpupixel version
