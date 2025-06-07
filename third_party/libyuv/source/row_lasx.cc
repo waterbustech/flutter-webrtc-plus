@@ -543,8 +543,8 @@ void I422ToARGB4444Row_LASX(const uint8_t* src_y,
   __m256i vec_yb, vec_yg, vec_ub, vec_vr, vec_ug, vec_vg;
   __m256i vec_ubvr, vec_ugvg;
   __m256i const_0x80 = __lasx_xvldi(0x80);
-  __m256i alpha = {0xF000F000F000F000, 0xF000F000F000F000, 0xF000F000F000F000,
-                   0xF000F000F000F000};
+  __m256i alpha = (__m256i)v4u64{0xF000F000F000F000, 0xF000F000F000F000,
+                                 0xF000F000F000F000, 0xF000F000F000F000};
   __m256i mask = {0x00F000F000F000F0, 0x00F000F000F000F0, 0x00F000F000F000F0,
                   0x00F000F000F000F0};
 
@@ -595,8 +595,8 @@ void I422ToARGB1555Row_LASX(const uint8_t* src_y,
   __m256i vec_yb, vec_yg, vec_ub, vec_vr, vec_ug, vec_vg;
   __m256i vec_ubvr, vec_ugvg;
   __m256i const_0x80 = __lasx_xvldi(0x80);
-  __m256i alpha = {0x8000800080008000, 0x8000800080008000, 0x8000800080008000,
-                   0x8000800080008000};
+  __m256i alpha = (__m256i)v4u64{0x8000800080008000, 0x8000800080008000,
+                                 0x8000800080008000, 0x8000800080008000};
 
   YUVTORGB_SETUP(yuvconstants, vec_ub, vec_vr, vec_ug, vec_vg, vec_yg, vec_yb);
   vec_ubvr = __lasx_xvilvl_h(vec_ub, vec_vr);
@@ -799,8 +799,8 @@ void ARGBToUVRow_LASX(const uint8_t* src_argb0,
                         0x0009000900090009, 0x0009000900090009};
   __m256i control = {0x0000000400000000, 0x0000000500000001, 0x0000000600000002,
                      0x0000000700000003};
-  __m256i const_0x8080 = {0x8080808080808080, 0x8080808080808080,
-                          0x8080808080808080, 0x8080808080808080};
+  __m256i const_0x8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                        0x8080808080808080, 0x8080808080808080};
 
   for (x = 0; x < len; x++) {
     DUP4_ARG2(__lasx_xvld, src_argb0, 0, src_argb0, 32, src_argb0, 64,
@@ -1037,8 +1037,8 @@ void ARGBToUV444Row_LASX(const uint8_t* src_argb,
   __m256i const_38 = __lasx_xvldi(38);
   __m256i const_94 = __lasx_xvldi(94);
   __m256i const_18 = __lasx_xvldi(18);
-  __m256i const_0x8080 = {0x8080808080808080, 0x8080808080808080,
-                          0x8080808080808080, 0x8080808080808080};
+  __m256i const_0x8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                        0x8080808080808080, 0x8080808080808080};
   __m256i control = {0x0000000400000000, 0x0000000500000001, 0x0000000600000002,
                      0x0000000700000003};
   for (x = 0; x < len; x++) {
@@ -1148,24 +1148,26 @@ void ARGBAttenuateRow_LASX(const uint8_t* src_argb,
   __m256i b, g, r, a, dst0, dst1;
   __m256i control = {0x0005000100040000, 0x0007000300060002, 0x0005000100040000,
                      0x0007000300060002};
+  __m256i zero = __lasx_xvldi(0);
+  __m256i const_add = __lasx_xvldi(0x8ff);
 
   for (x = 0; x < len; x++) {
     DUP2_ARG2(__lasx_xvld, src_argb, 0, src_argb, 32, src0, src1);
     tmp0 = __lasx_xvpickev_b(src1, src0);
     tmp1 = __lasx_xvpickod_b(src1, src0);
-    b = __lasx_xvpackev_b(tmp0, tmp0);
-    r = __lasx_xvpackod_b(tmp0, tmp0);
-    g = __lasx_xvpackev_b(tmp1, tmp1);
-    a = __lasx_xvpackod_b(tmp1, tmp1);
-    reg0 = __lasx_xvmulwev_w_hu(b, a);
-    reg1 = __lasx_xvmulwod_w_hu(b, a);
-    reg2 = __lasx_xvmulwev_w_hu(r, a);
-    reg3 = __lasx_xvmulwod_w_hu(r, a);
-    reg4 = __lasx_xvmulwev_w_hu(g, a);
-    reg5 = __lasx_xvmulwod_w_hu(g, a);
-    reg0 = __lasx_xvssrani_h_w(reg1, reg0, 24);
-    reg2 = __lasx_xvssrani_h_w(reg3, reg2, 24);
-    reg4 = __lasx_xvssrani_h_w(reg5, reg4, 24);
+    b = __lasx_xvpackev_b(zero, tmp0);
+    r = __lasx_xvpackod_b(zero, tmp0);
+    g = __lasx_xvpackev_b(zero, tmp1);
+    a = __lasx_xvpackod_b(zero, tmp1);
+    reg0 = __lasx_xvmaddwev_w_hu(const_add, b, a);
+    reg1 = __lasx_xvmaddwod_w_hu(const_add, b, a);
+    reg2 = __lasx_xvmaddwev_w_hu(const_add, r, a);
+    reg3 = __lasx_xvmaddwod_w_hu(const_add, r, a);
+    reg4 = __lasx_xvmaddwev_w_hu(const_add, g, a);
+    reg5 = __lasx_xvmaddwod_w_hu(const_add, g, a);
+    reg0 = __lasx_xvssrani_h_w(reg1, reg0, 8);
+    reg2 = __lasx_xvssrani_h_w(reg3, reg2, 8);
+    reg4 = __lasx_xvssrani_h_w(reg5, reg4, 8);
     reg0 = __lasx_xvshuf_h(control, reg0, reg0);
     reg2 = __lasx_xvshuf_h(control, reg2, reg2);
     reg4 = __lasx_xvshuf_h(control, reg4, reg4);
@@ -1609,8 +1611,8 @@ void ARGB1555ToUVRow_LASX(const uint8_t* src_argb1555,
   __m256i const_38 = __lasx_xvldi(0x413);
   __m256i const_94 = __lasx_xvldi(0x42F);
   __m256i const_18 = __lasx_xvldi(0x409);
-  __m256i const_8080 = {0x8080808080808080, 0x8080808080808080,
-                        0x8080808080808080, 0x8080808080808080};
+  __m256i const_8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                      0x8080808080808080, 0x8080808080808080};
 
   for (x = 0; x < len; x++) {
     DUP4_ARG2(__lasx_xvld, src_argb1555, 0, src_argb1555, 32, next_argb1555, 0,
@@ -1726,8 +1728,8 @@ void RGB565ToUVRow_LASX(const uint8_t* src_rgb565,
   __m256i const_38 = __lasx_xvldi(0x413);
   __m256i const_94 = __lasx_xvldi(0x42F);
   __m256i const_18 = __lasx_xvldi(0x409);
-  __m256i const_8080 = {0x8080808080808080, 0x8080808080808080,
-                        0x8080808080808080, 0x8080808080808080};
+  __m256i const_8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                      0x8080808080808080, 0x8080808080808080};
 
   for (x = 0; x < len; x++) {
     DUP4_ARG2(__lasx_xvld, src_rgb565, 0, src_rgb565, 32, next_rgb565, 0,
@@ -1793,8 +1795,8 @@ void RGB24ToUVRow_LASX(const uint8_t* src_rgb24,
   __m256i const_38 = __lasx_xvldi(0x413);
   __m256i const_94 = __lasx_xvldi(0x42F);
   __m256i const_18 = __lasx_xvldi(0x409);
-  __m256i const_8080 = {0x8080808080808080, 0x8080808080808080,
-                        0x8080808080808080, 0x8080808080808080};
+  __m256i const_8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                      0x8080808080808080, 0x8080808080808080};
   __m256i shuff0_b = {0x15120F0C09060300, 0x00000000001E1B18,
                       0x15120F0C09060300, 0x00000000001E1B18};
   __m256i shuff1_b = {0x0706050403020100, 0x1D1A1714110A0908,
@@ -1856,8 +1858,8 @@ void RAWToUVRow_LASX(const uint8_t* src_raw,
   __m256i const_38 = __lasx_xvldi(0x413);
   __m256i const_94 = __lasx_xvldi(0x42F);
   __m256i const_18 = __lasx_xvldi(0x409);
-  __m256i const_8080 = {0x8080808080808080, 0x8080808080808080,
-                        0x8080808080808080, 0x8080808080808080};
+  __m256i const_8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                      0x8080808080808080, 0x8080808080808080};
   __m256i shuff0_r = {0x15120F0C09060300, 0x00000000001E1B18,
                       0x15120F0C09060300, 0x00000000001E1B18};
   __m256i shuff1_r = {0x0706050403020100, 0x1D1A1714110A0908,
@@ -2000,11 +2002,13 @@ void NV21ToARGBRow_LASX(const uint8_t* src_y,
   }
 }
 
+#ifndef RgbConstants
 struct RgbConstants {
   uint8_t kRGBToY[4];
   uint16_t kAddY;
   uint16_t pad;
 };
+#define RgbConstants RgbConstants
 
 // RGB to JPeg coefficients
 // B * 0.1140 coefficient = 29
@@ -2030,6 +2034,7 @@ static const struct RgbConstants kRgb24I601Constants = {{25, 129, 66, 0},
 static const struct RgbConstants kRawI601Constants = {{66, 129, 25, 0},
                                                       0x1080,
                                                       0};
+#endif  // RgbConstants
 
 // ARGB expects first 3 values to contain RGB and 4th value is ignored.
 static void ARGBToYMatrixRow_LASX(const uint8_t* src_argb,
@@ -2242,8 +2247,8 @@ void ARGBToUVJRow_LASX(const uint8_t* src_argb,
   __m256i const_21 = __lasx_xvldi(0x415);
   __m256i const_53 = __lasx_xvldi(0x435);
   __m256i const_10 = __lasx_xvldi(0x40A);
-  __m256i const_8080 = {0x8080808080808080, 0x8080808080808080,
-                        0x8080808080808080, 0x8080808080808080};
+  __m256i const_8080 = (__m256i)v4u64{0x8080808080808080, 0x8080808080808080,
+                                      0x8080808080808080, 0x8080808080808080};
   __m256i shuff = {0x1614060412100200, 0x1E1C0E0C1A180A08, 0x1715070513110301,
                    0x1F1D0F0D1B190B09};
 
@@ -2295,6 +2300,17 @@ void ARGBToUVJRow_LASX(const uint8_t* src_argb,
     next_argb += 128;
   }
 }
+
+// undef for unified sources build
+#undef ALPHA_VAL
+#undef YUVTORGB_SETUP
+#undef READYUV422_D
+#undef READYUV422
+#undef YUVTORGB_D
+#undef YUVTORGB
+#undef STOREARGB_D
+#undef STOREARGB
+#undef RGBTOUV
 
 #ifdef __cplusplus
 }  // extern "C"
