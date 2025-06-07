@@ -36,6 +36,7 @@ add_library(${PLUGIN_NAME} SHARED
   "../common/cpp/src/flutter_webrtc_base.cc"
   "../third_party/uuidxx/uuidxx.cc"
   "flutter_webrtc_plus_plugin.cc"
+  "task_runner_windows.cc"
 )
 
 # Include directories for dependencies

@@ -14,7 +14,7 @@
  
  #include "task_runner.h"
  
- namespace flutter_webrtc_plugin {
+ namespace flutter_webrtc_plus_plugin {
  
  // Hidden HWND responsible for processing camera tasks on main thread
  // Adapted from Flutter Engine, see:
