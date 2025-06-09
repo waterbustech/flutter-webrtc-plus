@@ -1,6 +1,10 @@
 
 # Changelog
 
+[0.14.1+3] - 2025-06-09
+
+* [Windows] feat: add gpupixel (only run release mode)
+
 [0.14.1+2] - 2025-06-06
 
 * [Linux] fix: run fail
