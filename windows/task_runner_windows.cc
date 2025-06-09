@@ -7,7 +7,7 @@
  #include <algorithm>
  #include <iostream>
  
- namespace flutter_webrtc_plugin {
+ namespace flutter_webrtc_plus_plugin {
  
  TaskRunnerWindows::TaskRunnerWindows() {
    WNDCLASS window_class = RegisterWindowClass();
