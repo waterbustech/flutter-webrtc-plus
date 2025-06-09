@@ -21,21 +21,22 @@ class FlutterVirtualBackground : public RTCVideoRenderer<scoped_refptr<RTCVideoF
   virtual void OnFrame(scoped_refptr<RTCVideoFrame> frame) override;
 
   void SetThinFaceValue(const double value);
-  
   void SetWhiteValue(const double value);
-  
   void SetBigEyeValue(const double value);
-  
   void SetSmoothValue(const double value);
-  
   void SetLipstickValue(const double value);
-  
   void SetBlusherValue(const double value);
 
  private:
   RTCVideoTrack* track_;
 
   void InitGPUPixel();
+  void ConvertYUV420ToRGBA(const uint8_t* y_plane, const uint8_t* u_plane, const uint8_t* v_plane,
+    int y_stride, int u_stride, int v_stride,
+    int width, int height, uint8_t* rgba_output);
+  void ConvertRGBAToYUV420(const uint8_t* rgba_input, int width, int height,
+      uint8_t* y_plane, uint8_t* u_plane, uint8_t* v_plane,
+      int y_stride, int u_stride, int v_stride);
 };
 
 }  // namespace flutter_webrtc_plus_plugin

@@ -2,7 +2,7 @@
 
 WebRTC plugin for Flutter Mobile/Desktop/Web. This plugin fork from [flutter_webrtc](https://pub.dev/packages/flutter_webrtc) to implement `Beauty Filters`, `Virtual Background` and further.
 
-<a href="https://github.com/waterbustech/waterbus"><img src="https://github.com/waterbustech/waterbus/raw/feat/waterbus-v2/screenshots/waterbus-awesome.gif" width="100%"/></a>
+<a href="https://github.com/waterbustech/waterbus"><img src="https://github.com/waterbustech/.github/raw/main/profile/images/waterbus-app.gif?raw=true" width="100%"/></a>
 
 <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-green.svg"/></a>
 <img src="https://img.shields.io/github/issues/waterbustech/flutter-webrtc-plus" alt="GitHub issues"><a href="https://chromium.googlesource.com/external/webrtc/+/branch-heads/6099"><img src="https://img.shields.io/badge/libwebrtc-128.6613.01-yellow.svg" alt="libwebrtc"></a><img src="https://img.shields.io/cocoapods/v/KaiRTC" alt="Cocoapods Version"><a href="https://github.com/lambiengcode"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat&amp;logo=github" alt="PRs Welcome"></a>
