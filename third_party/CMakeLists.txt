@@ -65,10 +65,10 @@ if(GPUPIXEL_ENABLE_FACE_DETECTOR)
   # Install shared libraries that are needed at runtime
   if(${CMAKE_SYSTEM_NAME} MATCHES "Windows" OR ${CMAKE_SYSTEM_NAME} MATCHES
                                                "Linux")
-    install(
-      FILES ${mars_shared_lib_path}
-      DESTINATION lib
-      COMPONENT runtime)
+    # install(
+    #   FILES ${mars_shared_lib_path}
+    #   DESTINATION lib
+    #   COMPONENT runtime)
   endif()
 
   # ---- MNN library configuration ----
