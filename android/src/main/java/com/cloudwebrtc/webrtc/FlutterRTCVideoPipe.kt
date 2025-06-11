@@ -37,7 +37,7 @@ class FlutterRTCVideoPipe: LocalVideoTrack.ExternalVideoFrameProcessing {
     private var sink: VideoSink? = null
     private val bitmapMap = HashMap<Long, CacheFrame>()
     private var lastProcessedFrameTime: Long = 0
-    private val targetFrameInterval: Long = 1000 / 30 // 30 FPS
+    private val targetFrameInterval: Long = 1000 / 15 // 15 FPS
     private var virtualBackground: FlutterRTCVirtualBackground? = null
     private var beautyFilters: FlutterRTCBeautyFilters? = null
 

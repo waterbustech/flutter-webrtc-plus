@@ -1,6 +1,11 @@
 
 # Changelog
 
+[0.14.1+4] - 2025-06-11
+
+* [Darwin] refactor: videopipe
+* [Darwin/Android] patch: limit 15 fps
+
 [0.14.1+3] - 2025-06-09
 
 * [Windows] feat: add gpupixel (only run release mode)

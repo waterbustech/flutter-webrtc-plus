@@ -10,34 +10,97 @@ import WebRTC
 
 @objc public class RTCVideoPipe: NSObject, RTCVideoCapturerDelegate {
     var beautyFilter: RTCBeautyFilter?
-    var beautyFilterDelegate: BeautyFilterDelegate?
+    var videoSource: RTCVideoSource?
+    var virtualBackground: RTCVirtualBackground?
+    var backgroundImage: CIImage?
+    var lastFrameTimestamp: Int64 = 0
+    let targetFrameDurationNs: Int64 = Int64(1_000_000_000 / 15) // 15fps
+    weak var rtcVideoCapturer: RTCVideoCapturer?
     
     @objc public init(videoSource: RTCVideoSource, virtualBackground: RTCVirtualBackground) {
         super.init()
-        self.beautyFilterDelegate = BeautyFilterDelegate(videoSource: videoSource, virtualBackground: virtualBackground)
-        self.beautyFilter = RTCBeautyFilter(delegate: self.beautyFilterDelegate)
+        self.videoSource = videoSource
+        self.virtualBackground = virtualBackground
+        self.beautyFilter = RTCBeautyFilter()
     }
     
     deinit {
         self.beautyFilter?.releaseInstance()
         self.beautyFilter = nil
-        self.beautyFilterDelegate = nil
+        self.videoSource = nil
+        self.virtualBackground = nil
+        self.backgroundImage = nil
+        self.rtcVideoCapturer = nil
     }
     
     @objc public func setBackgroundImage(image: CIImage?) {
-        self.beautyFilterDelegate?.setBackgroundImage(image: image)
+        self.backgroundImage = image
     }
     
     @objc public func capturer(_ capturer: RTCVideoCapturer, didCapture frame: RTCVideoFrame) {
-        self.beautyFilterDelegate?.setCapturer(capturer: capturer)
-        self.beautyFilterDelegate?.setRotation(rotation: frame.rotation)
+        self.rtcVideoCapturer = capturer
+        
+        // Frame rate limiting
+        let timestampNew = Int64(DispatchTime.now().uptimeNanoseconds)
+        let frameDuration = timestampNew - lastFrameTimestamp
+        
+        if frameDuration < targetFrameDurationNs {
+            return
+        }
+        
+        lastFrameTimestamp = timestampNew
         
         guard let pixelBuffer = self.convertRTCVideoFrameToPixelBuffer(frame) else {
             print("Failed to convert RTCVideoFrame to CVPixelBuffer")
             return
         }
         
-        self.beautyFilter?.processVideoFrame(pixelBuffer)
+        // Process the frame with beauty filter
+        guard let processedPixelBufferUnmanaged = self.beautyFilter?.processVideoFrame(pixelBuffer) else {
+            print("Failed to process video frame with beauty filter")
+            // If beauty filter fails, use original buffer
+            self.handleProcessedFrame(pixelBuffer, capturer: capturer)
+            return
+        }
+        
+        // Take ownership of the returned pixel buffer
+        let processedPixelBuffer = processedPixelBufferUnmanaged.takeRetainedValue()
+        
+        // Handle the processed frame
+        self.handleProcessedFrame(processedPixelBuffer, capturer: capturer)
+        
+        // No need to manually release - ARC handles this automatically
+        // CVPixelBufferRelease(processedPixelBuffer) // Remove this line
+    }
+    
+    private func handleProcessedFrame(_ pixelBuffer: CVPixelBuffer, capturer: RTCVideoCapturer) {
+        if backgroundImage == nil {
+            // No background image, send frame directly
+            let timestampNs = DispatchTime.now().uptimeNanoseconds
+            
+            guard let frame: RTCVideoFrame = pixelBuffer.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
+                return
+            }
+            
+            self.videoSource?.capturer(capturer, didCapture: frame)
+            return
+        }
+        
+        // Process with virtual background
+        virtualBackground?.processForegroundMask(from: pixelBuffer, backgroundImage: backgroundImage!) { bufferProcessed, error in
+            if let error = error {
+                // Handle error
+                print("Error processing foreground mask: \(error.localizedDescription)")
+            } else if let bufferProcessed = bufferProcessed {
+                let timestampNs = DispatchTime.now().uptimeNanoseconds
+                
+                guard let frame: RTCVideoFrame = bufferProcessed.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
+                    return
+                }
+                
+                self.videoSource?.capturer(capturer, didCapture: frame)
+            }
+        }
     }
     
     @objc public func setThinFaceValue(value: CGFloat) {
@@ -82,90 +145,8 @@ extension RTCVideoPipe {
             print("Error: RTCVideoFrame buffer is not of type RTCCVPixelBuffer")
             return nil
         }
-        
     }
 }
-
-class BeautyFilterDelegate: NSObject, RTCBeautyFilterDelegate {
-    var lastFrameTimestamp: Int64 = 0
-    let targetFrameDurationNs: Int64 = Int64(1_000_000_000 / 30) // 30fps
-    
-    var videoSource: RTCVideoSource?
-    var virtualBackground: RTCVirtualBackground?
-    var backgroundImage: CIImage?
-    var rotate: RTCVideoRotation = RTCVideoRotation._180
-    weak var rtcVideoCapturer: RTCVideoCapturer?
-    
-    init(videoSource: RTCVideoSource? = nil, virtualBackground: RTCVirtualBackground) {
-        self.videoSource = videoSource
-        self.virtualBackground = virtualBackground
-    }
-    
-    deinit {
-        self.videoSource = nil
-        self.virtualBackground = nil
-        self.backgroundImage = nil
-        self.rtcVideoCapturer = nil
-    }
-    
-    func didReceive(_ pixelBuffer: CVPixelBuffer!, width: Int32, height: Int32, timestamp: Int64) {
-        let timestampNew = Int64( DispatchTime.now().uptimeNanoseconds)
-        let frameDuration = timestampNew - lastFrameTimestamp
-        
-        if frameDuration < targetFrameDurationNs {
-            return
-        }
-
-        lastFrameTimestamp = timestampNew
-        
-        if backgroundImage == nil {
-            let timestampNs = DispatchTime.now().uptimeNanoseconds
-            
-            guard let frame: RTCVideoFrame = pixelBuffer.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
-                return
-            }
-            
-            guard let capturer = rtcVideoCapturer else {
-                return
-            }
-            
-            self.videoSource?.capturer(capturer, didCapture: frame)
-            return
-        }
-        
-        virtualBackground?.processForegroundMask(from: pixelBuffer, backgroundImage: backgroundImage!) { bufferProcessed, error in
-            if let error = error {
-                // Handle error
-                print("Error processing foreground mask: \(error.localizedDescription)")
-            } else if let bufferProcessed = bufferProcessed {
-                let timestampNs = DispatchTime.now().uptimeNanoseconds
-                
-                guard let frame: RTCVideoFrame = bufferProcessed.convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation._0, timeStampNs: Int64(timestampNs)) else {
-                    return
-                }
-                
-                guard let capturer = self.rtcVideoCapturer else {
-                    return
-                }
-                
-                self.videoSource?.capturer(capturer, didCapture: frame)
-            }
-        }
-    }
-    
-    public func setBackgroundImage(image: CIImage?) {
-        backgroundImage = image
-    }
-    
-    public func setCapturer(capturer: RTCVideoCapturer) {
-        rtcVideoCapturer = capturer
-    }
-    
-    public func setRotation(rotation: RTCVideoRotation) {
-        self.rotate = rotation
-    }
-}
-
 
 extension CVPixelBuffer {
     func convertPixelBufferToRTCVideoFrame(rotation: RTCVideoRotation, timeStampNs: Int64) -> RTCVideoFrame? {
@@ -177,66 +158,6 @@ extension CVPixelBuffer {
         let rtcVideoFrame = RTCVideoFrame(buffer: rtcPixelBuffer, rotation: rotation, timeStampNs: timeStampNs)
         
         return rtcVideoFrame
-    }
-
-    public func getPixelFormatName() -> String {
-        let p = CVPixelBufferGetPixelFormatType(self)
-        switch p {
-        case kCVPixelFormatType_1Monochrome:                   return "kCVPixelFormatType_1Monochrome"
-        case kCVPixelFormatType_2Indexed:                      return "kCVPixelFormatType_2Indexed"
-        case kCVPixelFormatType_4Indexed:                      return "kCVPixelFormatType_4Indexed"
-        case kCVPixelFormatType_8Indexed:                      return "kCVPixelFormatType_8Indexed"
-        case kCVPixelFormatType_1IndexedGray_WhiteIsZero:      return "kCVPixelFormatType_1IndexedGray_WhiteIsZero"
-        case kCVPixelFormatType_2IndexedGray_WhiteIsZero:      return "kCVPixelFormatType_2IndexedGray_WhiteIsZero"
-        case kCVPixelFormatType_4IndexedGray_WhiteIsZero:      return "kCVPixelFormatType_4IndexedGray_WhiteIsZero"
-        case kCVPixelFormatType_8IndexedGray_WhiteIsZero:      return "kCVPixelFormatType_8IndexedGray_WhiteIsZero"
-        case kCVPixelFormatType_16BE555:                       return "kCVPixelFormatType_16BE555"
-        case kCVPixelFormatType_16LE555:                       return "kCVPixelFormatType_16LE555"
-        case kCVPixelFormatType_16LE5551:                      return "kCVPixelFormatType_16LE5551"
-        case kCVPixelFormatType_16BE565:                       return "kCVPixelFormatType_16BE565"
-        case kCVPixelFormatType_16LE565:                       return "kCVPixelFormatType_16LE565"
-        case kCVPixelFormatType_24RGB:                         return "kCVPixelFormatType_24RGB"
-        case kCVPixelFormatType_24BGR:                         return "kCVPixelFormatType_24BGR"
-        case kCVPixelFormatType_32ARGB:                        return "kCVPixelFormatType_32ARGB"
-        case kCVPixelFormatType_32BGRA:                        return "kCVPixelFormatType_32BGRA"
-        case kCVPixelFormatType_32ABGR:                        return "kCVPixelFormatType_32ABGR"
-        case kCVPixelFormatType_32RGBA:                        return "kCVPixelFormatType_32RGBA"
-        case kCVPixelFormatType_64ARGB:                        return "kCVPixelFormatType_64ARGB"
-        case kCVPixelFormatType_48RGB:                         return "kCVPixelFormatType_48RGB"
-        case kCVPixelFormatType_32AlphaGray:                   return "kCVPixelFormatType_32AlphaGray"
-        case kCVPixelFormatType_16Gray:                        return "kCVPixelFormatType_16Gray"
-        case kCVPixelFormatType_30RGB:                         return "kCVPixelFormatType_30RGB"
-        case kCVPixelFormatType_422YpCbCr8:                    return "kCVPixelFormatType_422YpCbCr8"
-        case kCVPixelFormatType_4444YpCbCrA8:                  return "kCVPixelFormatType_4444YpCbCrA8"
-        case kCVPixelFormatType_4444YpCbCrA8R:                 return "kCVPixelFormatType_4444YpCbCrA8R"
-        case kCVPixelFormatType_4444AYpCbCr8:                  return "kCVPixelFormatType_4444AYpCbCr8"
-        case kCVPixelFormatType_4444AYpCbCr16:                 return "kCVPixelFormatType_4444AYpCbCr16"
-        case kCVPixelFormatType_444YpCbCr8:                    return "kCVPixelFormatType_444YpCbCr8"
-        case kCVPixelFormatType_422YpCbCr16:                   return "kCVPixelFormatType_422YpCbCr16"
-        case kCVPixelFormatType_422YpCbCr10:                   return "kCVPixelFormatType_422YpCbCr10"
-        case kCVPixelFormatType_444YpCbCr10:                   return "kCVPixelFormatType_444YpCbCr10"
-        case kCVPixelFormatType_420YpCbCr8Planar:              return "kCVPixelFormatType_420YpCbCr8Planar"
-        case kCVPixelFormatType_420YpCbCr8PlanarFullRange:     return "kCVPixelFormatType_420YpCbCr8PlanarFullRange"
-        case kCVPixelFormatType_422YpCbCr_4A_8BiPlanar:        return "kCVPixelFormatType_422YpCbCr_4A_8BiPlanar"
-        case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:  return "kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange"
-        case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:   return "kCVPixelFormatType_420YpCbCr8BiPlanarFullRange"
-        case kCVPixelFormatType_422YpCbCr8_yuvs:               return "kCVPixelFormatType_422YpCbCr8_yuvs"
-        case kCVPixelFormatType_422YpCbCr8FullRange:           return "kCVPixelFormatType_422YpCbCr8FullRange"
-        case kCVPixelFormatType_OneComponent8:                 return "kCVPixelFormatType_OneComponent8"
-        case kCVPixelFormatType_TwoComponent8:                 return "kCVPixelFormatType_TwoComponent8"
-        case kCVPixelFormatType_30RGBLEPackedWideGamut:        return "kCVPixelFormatType_30RGBLEPackedWideGamut"
-        case kCVPixelFormatType_OneComponent16Half:            return "kCVPixelFormatType_OneComponent16Half"
-        case kCVPixelFormatType_OneComponent32Float:           return "kCVPixelFormatType_OneComponent32Float"
-        case kCVPixelFormatType_TwoComponent16Half:            return "kCVPixelFormatType_TwoComponent16Half"
-        case kCVPixelFormatType_TwoComponent32Float:           return "kCVPixelFormatType_TwoComponent32Float"
-        case kCVPixelFormatType_64RGBAHalf:                    return "kCVPixelFormatType_64RGBAHalf"
-        case kCVPixelFormatType_128RGBAFloat:                  return "kCVPixelFormatType_128RGBAFloat"
-        case kCVPixelFormatType_14Bayer_GRBG:                  return "kCVPixelFormatType_14Bayer_GRBG"
-        case kCVPixelFormatType_14Bayer_RGGB:                  return "kCVPixelFormatType_14Bayer_RGGB"
-        case kCVPixelFormatType_14Bayer_BGGR:                  return "kCVPixelFormatType_14Bayer_BGGR"
-        case kCVPixelFormatType_14Bayer_GBRG:                  return "kCVPixelFormatType_14Bayer_GBRG"
-        default: return "UNKNOWN"
-        }
     }
 }
 

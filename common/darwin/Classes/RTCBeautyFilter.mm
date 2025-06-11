@@ -28,10 +28,9 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
 
 @implementation RTCBeautyFilter
 
-- (instancetype)initWithDelegate:(id<RTCBeautyFilterDelegate>)delegate {
+- (instancetype)init {
     self = [super init];
     if (self) {
-        _delegate = delegate;
         [self setup];
     }
     return self;
@@ -47,9 +46,7 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     faceReshapeFilter.reset();
     lipstickFilter.reset();
     blusherFilter.reset();
-    
-    // Release delegate
-    _delegate = nil;
+    faceDetector.reset();
 }
 
 - (void)setup {
@@ -69,8 +66,6 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     
     // Create result handler
     sinkRawData = SinkRawData::Create();
-    
-    id<RTCBeautyFilterDelegate> delegatePtr = _delegate;
     
     sourceRawData->AddSink(lipstickFilter)
     ->AddSink(blusherFilter)
@@ -111,7 +106,7 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     blusherFilter->SetBlendLevel(value);
 }
 
-- (void)processVideoFrame:(CVPixelBufferRef)imageBuffer {
+- (CVPixelBufferRef)processVideoFrame:(CVPixelBufferRef)imageBuffer {
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
     auto width = CVPixelBufferGetWidth(imageBuffer);
     auto height = CVPixelBufferGetHeight(imageBuffer);
@@ -134,18 +129,18 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     // Get processed result
     const uint8_t* processedData = sinkRawData->GetRgbaBuffer();
     
-    // Process the result using the callback logic
+    // Process and return the filtered pixel buffer
     if (processedData) {
-        // Get current timestamp
-        int64_t timestamp = [[NSDate date] timeIntervalSince1970] * 1000000; // microseconds
-        [self processFilteredData:processedData
-                            width:(int)width
-                           height:(int)height
-                        timestamp:timestamp];
+        return [self createPixelBufferFromData:processedData
+                                         width:(int)width
+                                        height:(int)height];
     }
+    
+    // Return nil if processing failed
+    return nil;
 }
 
-- (void)processFilteredData:(const uint8_t*)data width:(int)width height:(int)height timestamp:(int64_t)ts {
+- (CVPixelBufferRef)createPixelBufferFromData:(const uint8_t*)data width:(int)width height:(int)height {
     CVPixelBufferRef pixelBuffer = NULL;
     
     size_t stride = width * 4;
@@ -153,7 +148,7 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     uint8_t* bgraData = (uint8_t*)malloc(stride * height);
     if (!bgraData) {
         NSLog(@"Error: Unable to allocate memory for BGRA pixel data");
-        return;
+        return nil;
     }
     
     // Convert RGBA to BGRA
@@ -170,7 +165,7 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
         (NSString *)kCVPixelBufferCGBitmapContextCompatibilityKey: @YES
     };
     
-    // Create pixel buffer with a release callback to free argbData
+    // Create pixel buffer with a release callback to free bgraData
     CVReturn result = CVPixelBufferCreateWithBytes(
                                                    kCFAllocatorDefault,
                                                    width,
@@ -187,17 +182,11 @@ static void releaseBGRAData(void *releaseRefCon, const void *baseAddress) {
     if (result != kCVReturnSuccess) {
         NSLog(@"Error: Unable to create pixel buffer");
         free(bgraData);  // Free the buffer manually in case of failure
-        return;
+        return nil;
     }
     
-    // Send processed pixel buffer to delegate
-    if (_delegate) {
-        [_delegate didReceivePixelBuffer:pixelBuffer width:width height:height timestamp:ts];
-    }
-    
-    CVPixelBufferRelease(pixelBuffer);
+    return pixelBuffer;  // Caller is responsible for releasing this
 }
-
 
 size_t getBufferSizeFromPixelBuffer(CVPixelBufferRef pixelBuffer) {
     // Get the bytes per row and height of the pixel buffer
